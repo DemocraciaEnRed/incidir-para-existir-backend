@@ -22,14 +22,15 @@ router.get('',
     query('category').optional().isInt().withMessage(msg.validationError.integer),
     query('section').optional().isInt().withMessage(msg.validationError.integer),
 	], 
+  validate,
 	BlogController.getAll
 );
 
 router.get('/:slug',
   [
-		check('token').not().isEmpty().withMessage('Slug is required'),
-
+		check('slug').not().isEmpty().withMessage('Slug is required'),
   ],
+  validate,
   BlogController.getOne
 );
 

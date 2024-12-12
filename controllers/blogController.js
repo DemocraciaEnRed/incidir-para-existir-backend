@@ -62,7 +62,7 @@ exports.getOne = async (req, res) => {
     }
 
     // find the entry
-    const entry = models.BlogEntry.findOne({
+    const entry = await models.BlogEntry.findOne({
       where: { slug },
       include: [
         {
