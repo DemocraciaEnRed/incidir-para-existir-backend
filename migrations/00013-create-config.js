@@ -2,7 +2,7 @@ const {Sequelize} = require('sequelize')
 
 module.exports = {
   async up({context: queryInterface}) {
-    await queryInterface.createTable('Dimensions', {
+    await queryInterface.createTable('Configs', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -13,9 +13,13 @@ module.exports = {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
       },
-      name: {
+      type: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
+      },
+      value: {
+        type: Sequelize.DataTypes.TEXT,
+        allowNull: true
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
@@ -28,18 +32,11 @@ module.exports = {
         allowNull: false,
       }
     });
-    await queryInterface.bulkInsert('Dimensions', [
-      { name: 'Educación de calidad', },
-      { name: 'Empleo digno', },
-      { name: 'Espacios públicos seguros', },
-      { name: 'Salud Integral', },
-      { name: 'Participación política juvenil', },
-      { name: 'Transporte público digno', },
-      { name: 'Ambiente sano', },
-      { name: 'Ocio y cultura', }
+    await queryInterface.bulkInsert('Configs', [
+      { key: 'tos', type: 'string', value: 'Próximamente' },
     ]);
   },
   async down({context: queryInterface}) {
-    await queryInterface.dropTable('Dimensions');
+    await queryInterface.dropTable('Configs');
   }
 };

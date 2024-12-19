@@ -2,20 +2,44 @@ const {Sequelize} = require('sequelize')
 
 module.exports = {
   async up({context: queryInterface}) {
-    await queryInterface.createTable('Dimensions', {
+    await queryInterface.createTable('Members', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.DataTypes.INTEGER
       },
-      key: {
+      fullname: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
       },
-      name: {
+      team: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
+      },
+      bio: {
+        type: Sequelize.DataTypes.TEXT,
+        allowNull: false
+      },
+      imageUrl: {
+        type: Sequelize.DataTypes.STRING(510),
+        allowNull: true
+      },
+      linkedin: {
+        type: Sequelize.DataTypes.STRING(510),
+        allowNull: true
+      },
+      twitter: {
+        type: Sequelize.DataTypes.STRING(510),
+        allowNull: true
+      },
+      instagram: {
+        type: Sequelize.DataTypes.STRING(510),
+        allowNull: true
+      },
+      tiktok: {
+        type: Sequelize.DataTypes.STRING(510),
+        allowNull: true
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
@@ -28,18 +52,8 @@ module.exports = {
         allowNull: false,
       }
     });
-    await queryInterface.bulkInsert('Dimensions', [
-      { name: 'Educación de calidad', },
-      { name: 'Empleo digno', },
-      { name: 'Espacios públicos seguros', },
-      { name: 'Salud Integral', },
-      { name: 'Participación política juvenil', },
-      { name: 'Transporte público digno', },
-      { name: 'Ambiente sano', },
-      { name: 'Ocio y cultura', }
-    ]);
   },
   async down({context: queryInterface}) {
-    await queryInterface.dropTable('Dimensions');
+    await queryInterface.dropTable('Members');
   }
 };

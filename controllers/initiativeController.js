@@ -51,6 +51,75 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
+    const { 
+      name, 
+      description, 
+      needsAndOffers, 
+      dimensionIds,
+      subdivisionId
+    } = req.body;
+    const userId = req.user.id;
+
+    // get the user
+    const user = await models.User.findOne({
+      where: { id: userId },
+      include: [
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+        }
+      ]
+    });
+
+    if(!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // get the dimensions
+    const dimensions = await models.Dimension.findAll({
+      where: {
+        id: dimensionIds,
+      }
+    });
+
+    // TODO: check if the subdivisionId exists and the city of the subdivision is the same as the user's city
+
+    const t = await models.sequelize.transaction();
+    try {
+      // create the contact
+      const contact = {
+        fullname: req.body.contact.fullname,
+        email: req.body.contact.email,
+        phone: req.body.contact.phone,
+        keepPrivate: req.body.contact.keepPrivate,
+      }
+
+      const newContact = await models.InitiativeContact.create(contact, { transaction: t });
+
+      // create the initiative
+      const initiative = {
+        name,
+        description,
+        needsAndOffers,
+        contactId: newContact.id,
+        subdivisionId: subdivisionId,
+        authorId: user.id,
+      }
+
+      const newInitiative = await models.Initiative.create(initiative, { transaction: t });
+
+      // add the dimensions
+      await newInitiative.addDimensions(dimensions, { transaction: t });
+
+      await t.commit();
+
+    } catch(error){
+      console.error(error);
+      await t.rollback();
+      return res.status(500).json({ message: 'Error al crear la iniciativa' });
+    }
+
+    return res.status(201).json({ message: 'Iniciativa creada' });
 
   } catch (error) {
     console.error(error);

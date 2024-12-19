@@ -13,13 +13,22 @@ const router = express.Router();
 // -----------------------------------------------
 // BASE     /utils
 // -----------------------------------------------
-// POST 	/utils/subdivisions
+// GET 	/utils/subdivisions
+// GET 	/utils/configs
 // -----------------------------------------------
 
 
 router.get('/subdivisions', 
 	UtilsController.getSubdivisions
 );
+router.get('/dimensions', 
+	UtilsController.getDimensions
+);
+
+router.get('/configs', 
+	UtilsController.getConfigs
+);
+
 
 // -----------------------------------------------
 

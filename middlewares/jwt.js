@@ -1,6 +1,8 @@
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
 const User = require('../models').User;
+const Subdivision = require('../models').Subdivision;
+const City = require('../models').City;
 
 const opts = {
 	jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -11,7 +13,24 @@ module.exports = passport => {
 	passport.use(
 		new JwtStrategy(opts, (jwt_payload, done) => {
 			console.log(jwt_payload)
-			User.findByPk(jwt_payload.id)
+			User.findOne({
+				attributes: ['id', 'firstName', 'lastName', 'role', 'subdivisionId'],
+				include: {
+					model: Subdivision,
+					as: 'subdivision',
+					attributes: ['id', 'name'],
+					include: [
+						{
+							model: City,
+							as: 'city',
+							attributes: ['id', 'name'],
+						}
+					]
+				},
+				where: {
+					id: jwt_payload.id
+				}
+			})
 				.then(user => {
 					if (user) return done(null, user);
 					return done(null, false);

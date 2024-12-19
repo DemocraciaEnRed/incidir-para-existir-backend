@@ -2,6 +2,9 @@ const testRoutes = require('./test');
 const authRoutes = require('./auth');
 const utilsRoutes = require('./utils');
 const blogRoutes = require('./blog');
+const initiativeRoutes = require('./initiative');
+const challengeRoutes = require('./challenge');
+const faqRoutes = require('./faq');
 const authenticate = require('../middlewares/authenticate');
 
 module.exports = app => {
@@ -14,8 +17,11 @@ module.exports = app => {
 	app.use('/auth', authRoutes);
 	app.use('/blog', blogRoutes);
 	app.use('/utils', utilsRoutes);
-	// app.use('/users', userRoutes);
+	app.use('/faq', faqRoutes);
+	app.use('/initiatives', initiativeRoutes);
+	app.use('/challenges', challengeRoutes);
 	app.use('/test', testRoutes);
 };
 
 
+ 

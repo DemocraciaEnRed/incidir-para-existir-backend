@@ -1,6 +1,21 @@
+const { faker } = require('@faker-js/faker');
 const models = require('../models');
 const dayjs = require('dayjs');
 const msg = require('../utils/messages');
+const UtilsHelper = require('../helpers/utilsHelper');
+
+exports.getConfigs = async (req, res) => {
+  try {
+    const keys = req.query.keys ? req.query.keys.split(',') : null;
+    
+    const configs = await UtilsHelper.getConfigs(keys);
+
+    return res.status(200).json(configs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
 
 exports.getSubdivisions = async (req, res) => {
   try {
@@ -17,6 +32,20 @@ exports.getSubdivisions = async (req, res) => {
     });
 
     return res.status(200).json(subdivisions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.getDimensions = async (req, res) => {
+  try {
+    // get all dimensions
+    const dimensions = await models.Dimension.findAll({
+      attributes: ['id', 'name'],
+    });
+
+    return res.status(200).json(dimensions);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: msg.error.default });
@@ -40,17 +69,17 @@ exports.generateBlogPosts = async (req, res) => {
     const sections = await models.BlogSection.findAll();
     const authors = await models.User.findAll();
 
-    for(let i = 0; i < 100; i++) {
+    for(let i = 0; i < 50; i++) {
       const category = categories[Math.floor(Math.random() * categories.length)];
       const section = sections[Math.floor(Math.random() * sections.length)];
       const author = authors[Math.floor(Math.random() * authors.length)];
 
       await models.BlogEntry.create({
-        title: `Post ${i + 1}`,
-        subtitle: `This is the subtitle for post ${i + 1}`,
-        text: `This is the content for post ${i + 1}`,
-        imageUrl: 'https://placecats.com/300/200',
-        slug: `post-${i + 1}`,
+        title: faker.lorem.words({min: 8, max: 16}),
+        subtitle: faker.lorem.sentence(16),
+        text: faker.lorem.paragraphs({min: 12, max: 24}),
+        imageUrl: faker.image.urlPicsumPhotos({ width: 1024, height: 768, grayscale: false, blur: 0 }),
+        slug: faker.lorem.slug(5),
         authorId: author.id,
         categoryId: category.id,
         sectionId: section.id,

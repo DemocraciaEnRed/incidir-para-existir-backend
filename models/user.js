@@ -21,7 +21,10 @@ module.exports = (sequelize) => {
      */
     static associate(models) {
       // define association here
-      User.belongsTo(models.Subdivision);
+      User.belongsTo(models.Subdivision, {
+        foreignKey: 'subdivisionId',
+        as: 'subdivision',
+      });
       User.hasMany(models.Initiative, {
         foreignKey: 'authorId',
         sourceKey: 'id',
