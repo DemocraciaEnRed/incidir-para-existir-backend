@@ -29,14 +29,14 @@ module.exports = {
       }
     });
     await queryInterface.bulkInsert('Dimensions', [
-      { name: 'Educación de calidad', },
-      { name: 'Empleo digno', },
-      { name: 'Espacios públicos seguros', },
-      { name: 'Salud Integral', },
-      { name: 'Participación política juvenil', },
-      { name: 'Transporte público digno', },
-      { name: 'Ambiente sano', },
-      { name: 'Ocio y cultura', }
+      { key: 'educacion-calidad', name: 'Educación de calidad', },
+      { key: 'empleo-digno', name: 'Empleo digno', },
+      { key: 'espacios-publicos-seguros', name: 'Espacios públicos seguros', },
+      { key: 'salud-integral', name: 'Salud Integral', },
+      { key: 'participacion-politica-juvenil', name: 'Participación política juvenil', },
+      { key: 'transporte-publico-digno', name: 'Transporte público digno', },
+      { key: 'ambiente-sano', name: 'Ambiente sano', },
+      { key: 'ocio-cultura', name: 'Ocio y cultura', }
     ]);
   },
   async down({context: queryInterface}) {
