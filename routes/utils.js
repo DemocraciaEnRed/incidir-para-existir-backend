@@ -29,6 +29,10 @@ router.get('/configs',
 	UtilsController.getConfigs
 );
 
+router.get('/cities',
+	UtilsController.getCities
+)
+
 
 // -----------------------------------------------
 

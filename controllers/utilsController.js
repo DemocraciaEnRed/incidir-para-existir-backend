@@ -38,6 +38,27 @@ exports.getSubdivisions = async (req, res) => {
   }
 }
 
+exports.getCities = async (req, res) => {
+  try {
+    // get all cities
+    const cities = await models.City.findAll({
+      attributes: ['id', 'name'],
+      include: [
+        {
+          model: models.Subdivision,
+          as: 'subdivisions',
+          attributes: ['id', 'name'],
+        }
+      ]
+    });
+
+    return res.status(200).json(cities);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
 exports.getDimensions = async (req, res) => {
   try {
     // get all dimensions
