@@ -29,79 +29,78 @@ exports.create = async (req, res) => {
 
 exports.stats = async (req, res) => {
   try {
-    const cityId = parseInt(req.query.cityId) || null;
-    // count how many challenges per dimension
-    const countChallengesPerDimension = await models.Challenge.count({
-      attributes: ['dimensionId'],
-      include: [
-        {
-          model: models.Subdivision,
-          as: 'subdivision',
-          where: cityId ? { cityId: cityId } : {}
-        }
-      ],
-      group: ['dimensionId']
-    });
-
-    // count how many challenges per city
-    const countChallengesInCity = await models.Challenge.count({
-      attributes: ['subdivision.cityId'],
-      include: [
-        {
-          model: models.Subdivision,
-          as: 'subdivision',
-          where: cityId ? { cityId: cityId } : {}
-        }
-      ],
-      group: ['subdivision.cityId'],
-    });
-
+    // RADAR DATA
     // {
-    //   "countChallengesPerDimension": [
-    //     {
-    //       "dimensionId": 1,
-    //       "count": 2
-    //     },
-    //     {
-    //       "dimensionId": 4,
-    //       "count": 2
-    //     },
-    //     {
-    //       "dimensionId": 2,
-    //       "count": 1
-    //     },
-    //     {
-    //       "dimensionId": 3,
-    //       "count": 1
-    //     },
-    //     {
-    //       "dimensionId": 6,
-    //       "count": 1
-    //     },
-    //     {
-    //       "dimensionId": 5,
-    //       "count": 1
-    //     },
-    //     {
-    //       "dimensionId": 7,
-    //       "count": 1
-    //     }
-    //   ],
-    //   "countChallengesInCity": [
-    //     {
-    //       "cityId": 1,
-    //       "count": 5
-    //     },
-    //     {
-    //       "cityId": 2,
-    //       "count": 4
-    //     }
+    //   legendData: ['Cali', 'Bogota'] // Names of the cities
+    //   radarIndicator: [ // Array with the names of the dimensions
+    //    { name: 'Educacion' }
+    //    ...
     //   ]
-    // }
+    //   radar: {
+    //   data: [
+    //     {
+    //     value: [], // the count of challenges per dimension
+    //     name: 'Cali' // the name of the city
+    //     },
+    //     ..
+    //   ]		 
+    //   }
+      
 
+    const radarData = {
+      legendData: [],
+      radarIndicator: [],
+      radar: {
+        data: []
+      }
+    };
+
+    const cities = await models.City.findAll({
+      attributes: ['id', 'name'],
+      include: [
+        {
+          model: models.Subdivision,
+          as: 'subdivisions',
+          attributes: ['id', 'name'],
+        }
+      ]
+    });
+
+    radarData.legendData = cities.map(city => city.name);
+
+    const dimensions = await models.Dimension.findAll({
+      attributes: ['id', 'name'],
+    });
+
+    radarData.radarIndicator = dimensions.map(dimension => ({ name: dimension.name }));
+    
+    // count how many challenges per dimension per city
+    for(let i = 0; i < cities.length; i++) {
+      const city = cities[i];
+      const data = {
+        value: [],
+        name: city.name
+      };
+      for(let j = 0; j < dimensions.length; j++) {
+        const dimension = dimensions[j];
+        const count = await models.Challenge.count({
+          where: {
+            dimensionId: dimension.id
+          },
+          include: [
+            {
+              model: models.Subdivision,
+              as: 'subdivision',
+              where: { cityId: city.id }
+            }
+          ]
+        });
+        data.value.push(count);
+      }
+      radarData.radar.data.push(data);
+    }
     return res.status(200).json({
-      countChallengesPerDimension,
-      countChallengesInCity
+      radarData,
     });
   } catch (error) {
     console.error(error);
