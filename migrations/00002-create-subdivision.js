@@ -146,7 +146,7 @@ module.exports = {
       //    Antonio Nariño
       //    Puente Aranda
       //    Candelaria
-      //    Rafael Uribe Uribe
+      //    Rafael Uribe
       //    Ciudad Bolívar
       //    Sumapaz
       {
@@ -236,7 +236,7 @@ module.exports = {
       },
       {
         cityId: 2,
-        name: 'Rafael Uribe Uribe',
+        name: 'Rafael Uribe',
         type: 'Localidad',
       },
       {
