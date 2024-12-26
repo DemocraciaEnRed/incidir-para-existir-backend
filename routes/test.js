@@ -3,6 +3,8 @@ const express = require('express');
 const models = require('../models');
 const mailer = require('../services/mailer');
 const router = express.Router();
+const { faker } = require('@faker-js/faker');
+
 
 router.get('/', (req, res) => {
   try {
@@ -37,52 +39,101 @@ router.get('/verifyaccount', async (req, res) => {
 
 router.get('/create-initiative', async (req, res) => {
   try {
-    const contact = {
-      fullname: 'John Doe',
-      email: 'something@gmail.com',
-      phone: '1234567890',
-      keepPrivate: false,
+
+    const dimensions = await models.Dimension.findAll()
+
+    // make a loop of 150 iterations
+    for(let i = 0; i < 150; i++) {
+
+
+      const contact = {
+        fullname: faker.person.fullName(),
+        email: faker.internet.email(),
+        phone: faker.phone.number(),
+        keepPrivate: faker.datatype.boolean()
+      }
+      const initiative = {
+        name: faker.lorem.sentence({min: 4, max: 15}),
+        description: faker.lorem.sentence({min: 10, max: 50}),
+        needsAndOffers: faker.lorem.sentence({min: 20, max: 90}),
+      }
+      const subdivisions = await models.Subdivision.findAll({include: 'city'})
+      // console.log(JSON.stringify(subdivisions,null,2))
+
+      // get a random subdivision
+      const randomSubdivision = subdivisions[Math.floor(Math.random() * subdivisions.length)]
+
+      const newContact = await models.InitiativeContact.create(contact)
+      const newInitiative = await models.Initiative.create({
+        ...initiative,
+        contactId: newContact.id,
+        subdivisionId: randomSubdivision.id,
+      })
+
+      // pick two random dimensions, different from each other
+      const randomIndex1 = Math.floor(Math.random() * dimensions.length)
+      let randomIndex2 = Math.floor(Math.random() * dimensions.length)
+      while(randomIndex2 === randomIndex1) {
+        randomIndex2 = Math.floor(Math.random() * dimensions.length)
+      }
+      const dimension1 = dimensions[randomIndex1]
+      const dimension2 = dimensions[randomIndex2]
+      
+      // make a 65% chance of adding both dimensions, the rest, add the first one
+      const chance = Math.random()
+      if(chance > 0.35) {
+        await newInitiative.addDimensions([dimension1, dimension2])
+      } else {
+        await newInitiative.addDimensions([dimension1])
+      }
     }
-    const initiative = {
-      name: 'Test Initiative',
-      description: 'My descriptions',
-      needsAndOffers: 'My needs and offers',
-    }
-    const subdivisions = await models.Subdivision.findAll({include: 'city'})
-    // console.log(JSON.stringify(subdivisions,null,2))
-
-    // get a random subdivision
-    const randomSubdivision = subdivisions[Math.floor(Math.random() * subdivisions.length)]
-    console.log(JSON.stringify(randomSubdivision,null,2))
-
-    // get dimension 1 and 2
-    const dimension1 = await models.Dimension.findByPk(1)
-    const dimension2 = await models.Dimension.findByPk(2)
-    // console.log(JSON.stringify(dimension1,null,2))
-    // console.log(JSON.stringify(dimension2,null,2))
-
-    
-    const newContact = await models.InitiativeContact.create(contact)
-    const newInitiative = await models.Initiative.create({
-      ...initiative,
-      contactId: newContact.id,
-      subdivisionId: randomSubdivision.id,
-    })
-    await newInitiative.addDimensions([dimension1, dimension2])
-
-    const finalResult = await models.Initiative.findByPk(newInitiative.id, {
-      include: [
-        {model: models.InitiativeContact, as: 'contact'},
-        {model: models.Subdivision, as: 'subdivision'},
-        {model: models.Dimension, as: 'dimensions'}
-      ]
-    })
 
     return res.status(200).json({
-      finalResult,
+      message: '150 Initiatives created successfully'
     })
 
   } catch (error) {
+    console.error(error)
+    return res.status(500).json({message: error.message})
+  }
+})
+
+
+router.get('/create-challenges', async (req, res) => {
+  try {
+    // challenge has:
+    //    dimensionId
+    //    subdivisionId
+    //    needsAndChallenges
+    //    proposal
+    //    inWords
+    
+    const dimensions = await models.Dimension.findAll()
+    const subdivisions = await models.Subdivision.findAll()
+
+    // make a loop of 150 iterations
+    for(let i = 0; i < 150; i++) {
+      const challenge = {
+        needsAndChallenges: faker.lorem.sentence({min: 20, max: 90}),
+        proposal: faker.lorem.sentence({min: 20, max: 90}),
+        inWords: faker.lorem.sentence({min: 20, max: 90}),
+      }
+
+      // get a random subdivision
+      const randomSubdivision = subdivisions[Math.floor(Math.random() * subdivisions.length)]
+      const randomDimension = dimensions[Math.floor(Math.random() * dimensions.length)]
+
+      const newChallenge = await models.Challenge.create({
+        subdivisionId: randomSubdivision.id,
+        dimensionId: randomDimension.id,
+        ...challenge,
+      })
+    }
+
+    return res.status(200).json({
+      message: '150 Challenges created successfully'
+    })
+  } catch {
     console.error(error)
     return res.status(500).json({message: error.message})
   }
