@@ -99,8 +99,47 @@ exports.stats = async (req, res) => {
       }
       radarData.radar.data.push(data);
     }
+
+    // Cali's challenes per subdivision
+    // Get an array of the subdivisions of Cali and count the challenges per subdivision
+    const cali = cities.find(city => city.name === 'Cali');
+    const subdivisionsCali = cali.subdivisions;
+    const challengesPerSubdivisionOfCali = [];
+    for(let i = 0; i < subdivisionsCali.length; i++) {
+      const subdivision = subdivisionsCali[i];
+      const count = await models.Challenge.count({
+        where: {
+          subdivisionId: subdivision.id
+        }
+      });
+      challengesPerSubdivisionOfCali.push({
+        name: subdivision.name,
+        value: count
+      });
+    }
+
+    // Bogota's challenes per subdivision
+    // Get an array of the subdivisions of Bogota and count the challenges per subdivision
+    const bogota = cities.find(city => city.name === 'Bogota');
+    const subdivisionsBogota = bogota.subdivisions;
+    const challengesPerSubdivisionOfBogota = [];
+    for(let i = 0; i < subdivisionsBogota.length; i++) {
+      const subdivision = subdivisionsBogota[i];
+      const count = await models.Challenge.count({
+        where: {
+          subdivisionId: subdivision.id
+        }
+      });
+      challengesPerSubdivisionOfBogota.push({
+        name: subdivision.name,
+        value: count
+      });
+    }
+
     return res.status(200).json({
       radarData,
+      challengesPerSubdivisionOfCali,
+      challengesPerSubdivisionOfBogota
     });
   } catch (error) {
     console.error(error);
