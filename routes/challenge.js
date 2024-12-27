@@ -29,8 +29,15 @@ router.post('/',
 	ChallengeController.create
 );
 
-router.get('/stats', 
-	ChallengeController.stats
+router.get('/stats/chart/count-by-subdivision/:cityId?',
+	[
+		check('cityId').optional().isInt().withMessage(msg.validationError.integer),
+	],
+	ChallengeController.statsChartCountBySubdivision
+);
+
+router.get('/stats/chart/count-by-dimension', 
+	ChallengeController.statsChartCountByDimension
 );
 
 // -----------------------------------------------

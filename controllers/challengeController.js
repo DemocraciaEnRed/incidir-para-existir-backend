@@ -1,148 +1,148 @@
-const models = require('../models');
-const msg = require('../utils/messages');
+const models = require("../models");
+const msg = require("../utils/messages");
 
 exports.create = async (req, res) => {
   try {
-    const { 
+    const {
       dimensionId,
       subdivisionId,
       needsAndChallenges,
       proposal,
-      inWords
-     } = req.body;
+      inWords,
+    } = req.body;
 
-     // create a new Challenge entry
+    // create a new Challenge entry
     const blogEntry = await models.Challenge.create({
       dimensionId,
       subdivisionId,
       needsAndChallenges,
       proposal,
-      inWords
+      inWords,
     });
-    
-     return res.status(201).json(blogEntry);
+
+    return res.status(201).json(blogEntry);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });
   }
-}
+};
 
-exports.stats = async (req, res) => {
+exports.statsChartCountByDimension = async (req, res) => {
   try {
-    // RADAR DATA
-    // {
-    //   legendData: ['Cali', 'Bogota'] // Names of the cities
-    //   radarIndicator: [ // Array with the names of the dimensions
-    //    { name: 'Educacion' }
-    //    ...
-    //   ]
-    //   radar: {
-    //   data: [
-    //     {
-    //     value: [], // the count of challenges per dimension
-    //     name: 'Cali' // the name of the city
-    //     },
-    //     ..
-    //   ]		 
-    //   }
-      
-
+    // Initialize radar data structure
     const radarData = {
       legendData: [],
       radarIndicator: [],
-      radar: {
-        data: []
-      }
+      radar: { data: [] },
     };
 
+    // Fetch cities and their subdivisions
     const cities = await models.City.findAll({
-      attributes: ['id', 'name'],
+      attributes: ["id", "name"],
       include: [
         {
           model: models.Subdivision,
-          as: 'subdivisions',
-          attributes: ['id', 'name'],
-        }
-      ]
+          as: "subdivisions",
+          attributes: ["id"],
+        },
+      ],
     });
 
-    radarData.legendData = cities.map(city => city.name);
+    radarData.legendData = cities.map((city) => city.name);
 
+    // Fetch dimensions
     const dimensions = await models.Dimension.findAll({
-      attributes: ['id', 'name'],
+      attributes: ["id", "name"],
     });
 
-    radarData.radarIndicator = dimensions.map(dimension => ({ name: dimension.name }));
-    
-    // count how many challenges per dimension per city
-    for(let i = 0; i < cities.length; i++) {
-      const city = cities[i];
-      const data = {
-        value: [],
-        name: city.name
-      };
-      for(let j = 0; j < dimensions.length; j++) {
-        const dimension = dimensions[j];
-        const count = await models.Challenge.count({
-          where: {
-            dimensionId: dimension.id
-          },
+    radarData.radarIndicator = dimensions.map((dimension) => ({
+      name: dimension.name,
+    }));
+
+    // Fetch all challenges and group counts by city and dimension
+    const challenges = await models.Challenge.count({
+      group: ["dimensionId", "subdivision.city.id"],
+      include: [
+        {
+          model: models.Subdivision,
+          as: "subdivision",
           include: [
             {
-              model: models.Subdivision,
-              as: 'subdivision',
-              where: { cityId: city.id }
-            }
-          ]
-        });
-        data.value.push(count);
-      }
-      radarData.radar.data.push(data);
-    }
-
-    // Cali's challenes per subdivision
-    // Get an array of the subdivisions of Cali and count the challenges per subdivision
-    const cali = cities.find(city => city.name === 'Cali');
-    const subdivisionsCali = cali.subdivisions;
-    const challengesPerSubdivisionOfCali = [];
-    for(let i = 0; i < subdivisionsCali.length; i++) {
-      const subdivision = subdivisionsCali[i];
-      const count = await models.Challenge.count({
-        where: {
-          subdivisionId: subdivision.id
-        }
-      });
-      challengesPerSubdivisionOfCali.push({
-        name: subdivision.name,
-        value: count
-      });
-    }
-
-    // Bogota's challenes per subdivision
-    // Get an array of the subdivisions of Bogota and count the challenges per subdivision
-    const bogota = cities.find(city => city.name === 'Bogota');
-    const subdivisionsBogota = bogota.subdivisions;
-    const challengesPerSubdivisionOfBogota = [];
-    for(let i = 0; i < subdivisionsBogota.length; i++) {
-      const subdivision = subdivisionsBogota[i];
-      const count = await models.Challenge.count({
-        where: {
-          subdivisionId: subdivision.id
-        }
-      });
-      challengesPerSubdivisionOfBogota.push({
-        name: subdivision.name,
-        value: count
-      });
-    }
-
-    return res.status(200).json({
-      radarData,
-      challengesPerSubdivisionOfCali,
-      challengesPerSubdivisionOfBogota
+              model: models.City,
+              as: "city",
+            },
+          ],
+        },
+      ],
     });
+
+    // Convert challenges to a map for fast access
+    const challengeCounts = challenges.reduce((acc, challenge) => {
+      const cityId = challenge.id; // subdivision.city.id;
+      const dimensionId = challenge.dimensionId;
+      const count = parseInt(challenge.count, 10);
+
+      if (!acc[cityId]) acc[cityId] = {};
+      acc[cityId][dimensionId] = count;
+
+      return acc;
+    }, {});
+
+    // Populate radar data for each city
+    for (const city of cities) {
+      const cityData = {
+        name: city.name,
+        value: dimensions.map(
+          (dimension) => challengeCounts[city.id]?.[dimension.id] || 0
+        ),
+      };
+      radarData.radar.data.push(cityData);
+    }
+
+    return res.status(200).json(radarData);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });
   }
-}
+};
+
+exports.statsChartCountBySubdivision = async (req, res) => {
+  try {
+    const cityId = req.params.cityId || null;
+    const countBySubdivisions = [];
+
+    // count how many challenges per subdivision per city
+    // challenge.subdivision.id , challenge.subdivision.name, challenge.subdivision.city.id, count
+    const countOfChallengesPerSubdivision = await models.Challenge.findAll({
+      attributes: [
+        [models.sequelize.col("subdivision.id"), "subdivisionId"],
+        [models.sequelize.col("subdivision.name"), "subdivisionName"],
+        [models.sequelize.col("subdivision.city.id"), "cityId"],
+        [models.sequelize.col("subdivision.city.name"), "cityName"],
+        [models.sequelize.fn("COUNT", "subdivisionId"), "count"],
+      ],
+      group: ["subdivisionId"],
+      include: [
+        {
+          model: models.Subdivision,
+          as: "subdivision",
+          where: cityId ? { cityId } : {},
+          attributes: [],
+          include: [
+            {
+              model: models.City,
+              as: "city",
+              where: cityId ? { id: cityId } : {},
+              attributes: [],
+            },
+          ],
+        },
+      ],
+    });
+
+    return res.status(200).json(countOfChallengesPerSubdivision);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+};
