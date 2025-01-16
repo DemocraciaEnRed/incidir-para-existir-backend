@@ -1,8 +1,9 @@
 const express = require('express');
-const { check } = require('express-validator');
+const { query, check } = require('express-validator');
 
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
+const constants = require('../services/constants');
 const requiresAnon = require('../middlewares/requiresAnon');
 const InitiativeController = require('../controllers/initiativeController');
 const msg = require('../utils/messages');
@@ -11,11 +12,23 @@ const msg = require('../utils/messages');
 const router = express.Router();
 
 // -----------------------------------------------
-// BASE   /challenges
+// BASE   /initiatives
 // -----------------------------------------------
 // POST   /
 // GET    /stats
 // -----------------------------------------------
+
+router.get('/',
+  [
+    query('page').optional().isInt().withMessage(msg.validationError.integer),
+    query('limit').optional().isInt().withMessage(msg.validationError.integer),
+    query('dimension.*').optional().isInt().withMessage(msg.validationError.integer),
+    query('includeUnpublished').optional().isBoolean().withMessage(msg.validationError.string),
+    query('q').optional().isString().withMessage(msg.validationError.string),
+  ], 
+  validate,
+  InitiativeController.fetch
+)
 
 router.post('/',
   authorize(),
@@ -35,6 +48,34 @@ router.post('/',
   validate,
   InitiativeController.create
 );
+
+router.delete('/:id',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    check('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  InitiativeController.delete
+);
+
+router.put('/:id/publish',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    check('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  InitiativeController.publish
+);
+
+router.put('/:id/unpublish',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    check('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  InitiativeController.unpublish
+);
+
 
 // router.get('/stats', 
 //   InitiativeController.stats

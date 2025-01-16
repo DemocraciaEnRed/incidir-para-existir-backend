@@ -1,5 +1,5 @@
 const express = require('express');
-const { check } = require('express-validator');
+const { check,query } = require('express-validator');
 
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
@@ -13,9 +13,23 @@ const router = express.Router();
 // -----------------------------------------------
 // BASE   /challenges
 // -----------------------------------------------
+// GET   	/
 // POST   /
-// GET    /stats
+// GET    /:id
+// DELETE	/:id
+// GET    /stats/chart/count-by-subdivision/:cityId?
 // -----------------------------------------------
+
+router.get('/',
+	[
+		query('page').optional().isInt().withMessage(msg.validationError.integer),
+		query('limit').optional().isInt().withMessage(msg.validationError.integer),
+		query('dimension').optional().isInt().withMessage(msg.validationError.integer),
+		query('subdivision').optional().isInt().withMessage(msg.validationError.string),
+	], 
+	validate,
+	ChallengeController.fetch
+)
 
 router.post('/', 
 	[
@@ -27,6 +41,22 @@ router.post('/',
 	], 
 	validate,
 	ChallengeController.create
+);
+
+router.delete('/:id',
+	[
+		check('id').isInt().withMessage(msg.validationError.integer),
+	],
+	validate,
+	ChallengeController.delete
+);
+
+router.get('/:id',
+	[
+		check('id').isInt().withMessage(msg.validationError.integer),
+	],
+	validate,
+	ChallengeController.fetchOne
 );
 
 router.get('/stats/chart/count-by-subdivision/:cityId?',

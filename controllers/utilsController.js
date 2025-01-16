@@ -73,6 +73,36 @@ exports.getDimensions = async (req, res) => {
   }
 }
 
+exports.getBlogCategories = async (req, res) => {
+  try {
+    // get all blogCategory
+    const blogCategory = await models.BlogCategory.findAll({
+      attributes: ['id', 'name'],
+    });
+
+    return res.status(200).json(blogCategory);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.getBlogSections = async (req, res) => {
+  try {
+    // get all blogSections
+    const blogSections = await models.BlogSection.findAll({
+      attributes: ['id', 'name'],
+    });
+
+    return res.status(200).json(blogSections);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+
+
 exports.somethingForUsers = async (req, res) => {
   try {
     console.log('req.user', req.user);

@@ -19,11 +19,13 @@ const router = express.Router();
 
 router.get('', 
 	[
+    query('page').optional().isInt().withMessage(msg.validationError.integer),
+    query('limit').optional().isInt().withMessage(msg.validationError.integer),
     query('category').optional().isInt().withMessage(msg.validationError.integer),
     query('section').optional().isInt().withMessage(msg.validationError.integer),
 	], 
   validate,
-	BlogController.getAll
+	BlogController.fetch
 );
 
 router.get('/:slug',
@@ -31,7 +33,7 @@ router.get('/:slug',
 		check('slug').not().isEmpty().withMessage('Slug is required'),
   ],
   validate,
-  BlogController.getOne
+  BlogController.fetchOne
 );
 
 module.exports = router;

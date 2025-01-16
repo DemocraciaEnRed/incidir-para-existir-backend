@@ -1,4 +1,5 @@
-const { Sequelize } = require('sequelize')
+const { Sequelize } = require('sequelize');
+const { publish } = require('../controllers/initiativeController');
 
 module.exports = {
   async up({context: queryInterface}) {
@@ -22,7 +23,9 @@ module.exports = {
         references: {
           model: 'InitiativeContacts',
           key: 'id'
-        }
+        },
+        onDelete: 'cascade',
+        onUpdate: 'cascade'
       },
       subdivisionId: {
         type: Sequelize.DataTypes.INTEGER,
@@ -43,6 +46,11 @@ module.exports = {
       needsAndOffers: {
         type: Sequelize.DataTypes.TEXT,
         allowNull: false,
+      },
+      publishedAt: {
+        type: Sequelize.DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
       },
       createdAt: {
         type: Sequelize.DataTypes.DATE,

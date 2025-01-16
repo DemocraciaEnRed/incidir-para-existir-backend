@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+const helmet = require('helmet');
 const cors = require('cors');
 const express = require('express')
 const { sequelize } = require('./models');
@@ -22,11 +23,15 @@ let PORT = process.env.APP_PORT || 3000;
 // Creating express app and configuring middleware needed for authentication
 const app = express();
 
+
+// Adding Helmet to enhance API's security
+app.use(helmet());
+
+// enabling CORS for all requests
 let appOrigins = ['http://localhost:3001']
 if(process.env.APP_URL){
 	appOrigins = process.env.APP_URL.split(',')
 }
-
 app.use(cors({
 	origin: appOrigins,
 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
@@ -35,6 +40,7 @@ app.use(cors({
 	credentials: true
 }));
 
+// Adding middleware to parse all incoming requests as JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

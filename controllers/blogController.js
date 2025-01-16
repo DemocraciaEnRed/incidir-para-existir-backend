@@ -3,7 +3,7 @@ const dayjs = require('dayjs');
 const msg = require('../utils/messages');
 const { selectFields } = require('express-validator/lib/field-selection');
 
-exports.getAll = async (req, res) => {
+exports.fetch = async (req, res) => {
   try {
     // get from query params page and limit (if not provided, default to 1 and 10)
     const page = parseInt(req.query.page) || 1;
@@ -14,9 +14,19 @@ exports.getAll = async (req, res) => {
     // calculateOffset
     const offset = (page - 1) * limit;
 
+    const whereQuery = {};
+
+    if(categoryId) {
+      whereQuery.categoryId = categoryId;
+    }
+    if(sectionId) {
+      whereQuery.sectionId = sectionId;
+    }
+
     const query = {
       limit: limit,
       offset: offset,
+      where: whereQuery,
       order: [['createdAt', 'DESC']],
       include: [
         {
@@ -30,16 +40,7 @@ exports.getAll = async (req, res) => {
           attributes: ['name'],
         },
       ],
-      where: {},
       order: [['createdAt', 'DESC']],
-    }
-
-    if (categoryId) { 
-      query.where.categoryId = categoryId;
-    }
-    
-    if (sectionId) {
-      query.where.sectionId = sectionId;
     }
 
     const entries = await models.BlogEntry.findAndCountAll(query)
@@ -52,7 +53,7 @@ exports.getAll = async (req, res) => {
   }
 }
 
-exports.getOne = async (req, res) => {
+exports.fetchOne = async (req, res) => {
   try {
     // get query param slug
     const slug = req.params.slug || null;

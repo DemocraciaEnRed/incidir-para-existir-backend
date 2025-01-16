@@ -14,6 +14,10 @@ const router = express.Router();
 // BASE     /utils
 // -----------------------------------------------
 // GET 	/utils/subdivisions
+// GET 	/utils/dimensions
+// GET 	/utils/blog-categories
+// GET 	/utils/blog-sections
+
 // GET 	/utils/configs
 // -----------------------------------------------
 
@@ -21,8 +25,17 @@ const router = express.Router();
 router.get('/subdivisions', 
 	UtilsController.getSubdivisions
 );
+
 router.get('/dimensions', 
 	UtilsController.getDimensions
+);
+
+router.get('/blog-categories', 
+	UtilsController.getBlogCategories
+);
+
+router.get('/blog-sections', 
+	UtilsController.getBlogSections
 );
 
 router.get('/configs', 

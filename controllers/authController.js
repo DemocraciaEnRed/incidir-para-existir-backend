@@ -69,18 +69,10 @@ exports.login = async (req, res) => {
 			return res.status(401).json({ message: 'El email no ha sido verificado' });
 		}
 
-		const outputUser = {
-			id: user.id,
-			email: user.email,
-			firstName: user.firstName,
-			lastName: user.lastName,
-			role: user.role
-		}
-
 		// login successful, write token, and send back to user
 		const token = await user.generateJWT();
 
-		return res.status(200).json({ token, user: outputUser });
+		return res.status(200).json({ token });
 
 	} catch (error) {
 		console.error(error);
@@ -260,7 +252,7 @@ exports.loggedIn = async (req, res) => {
 exports.getSession = async (req, res) => {
 	try {
 		if(req.user) {
-			return res.status(200).json({ user: req.user })
+			return res.status(200).json(req.user)
 		}
 		return res.status(401).json({ message: 'No hay sesión activa' })
 	} catch (error) {

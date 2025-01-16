@@ -13,6 +13,8 @@ module.exports = (sequelize) => {
       // define association here
       InitiativeContact.hasOne(models.Initiative, {
         foreignKey: 'contactId',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         as: 'initiative',
       });
     }
@@ -39,6 +41,19 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: false,
     },
+    publicData: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return {
+          fullname: this.fullname,
+          email:  this.keepPrivate ? 'Privado' : this.email,
+          phone: this.keepPrivate ? 'Privado' : this.phone,
+        };
+      },
+      set(val) {
+        throw new Error('Do not try to set the `publicData` value!');
+      }
+    }
   }, {
     sequelize,
     timestamps: true,

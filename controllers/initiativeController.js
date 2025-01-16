@@ -1,20 +1,79 @@
 const models = require('../models');
 const dayjs = require('dayjs');
 const msg = require('../utils/messages');
+const UtilsHelper = require('../helpers/utilsHelper');
+const InitiativeHelper = require('../helpers/initiativeHelper');
+const { Op } = require('sequelize');
 
-exports.getAll = async (req, res) => {
+exports.fetch = async (req, res) => {
   try {
     // get from query params page and limit (if not provided, default to 1 and 10)
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 10;
-    
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const queryName = req.query.q || null;
+    let dimension = req.query.dimension || null;
+    let includeUnpublished = req.query.includeUnpublished || false;
+    const isAdmin = UtilsHelper.isAdmin(req.user);
+
     // calculateOffset
     const offset = (page - 1) * limit;
 
-    const initiatives = await models.Initiative.findAndCountAll({
+    if(includeUnpublished && !isAdmin) {
+      includeUnpublished = false;
+    }
+
+    // dimension can be a single string or an array of strings
+    // validate that:
+    // - if it's a string, it's a number
+    // - if it's an array, all elements are numbers and the max amount is 2
+    if(dimension) {
+      if(Array.isArray(dimension)) {
+        if(dimension.length > 2) {
+          return res.status(400).json({ message: 'No se pueden filtrar por más de dos dimensiones' });
+        }
+        for(let i = 0; i < dimension.length; i++) {
+          if(isNaN(parseInt(dimension[i]))) {
+            return res.status(400).json({ message: 'Las dimensiones deben ser números' });
+          }
+        }
+      }
+      else {
+        if(isNaN(parseInt(dimension))) {
+          return res.status(400).json({ message: 'Las dimensiones deben ser números' });
+        }
+      }
+    }
+
+    // if it is an array of 2 dimensions, we'll use the getInitiativeIdsByTwoDimension
+    // if it is a single dimension, we'll use the getInitiativeIdsByOneDimension
+    // if it is not provided, we'll use the getIdsWithoutFilteringByDimensions
+
+    let result = null;
+    // check if we need to filter by dimensions
+    if(dimension) {
+      // if it's an array of 2 dimensions, we'll use the getInitiativeIdsByTwoDimensions
+      if(Array.isArray(dimension) && dimension.length === 2) {
+        result = await InitiativeHelper.getIdsByTwoDimensions(dimension[0], dimension[1], queryName, includeUnpublished);
+      }
+      else {
+        result = await InitiativeHelper.getInitiativeIdsByOneDimension(dimension, queryName, includeUnpublished);
+      }
+    } else {
+      result = await InitiativeHelper.getIdsWithoutFilteringByDimensions(queryName, includeUnpublished);
+    }
+
+    // get the ids from the result
+    const initiativeIds = result.map(row => row.id);
+
+    // get the initiatives
+    const initiativesResult = await models.Initiative.findAndCountAll({
       limit: limit,
       offset: offset,
+      where: {
+        id: initiativeIds,
+      },
       order: [['createdAt', 'DESC']],
+      distinct: true,
       include: [
         {
           model: models.User,
@@ -24,30 +83,49 @@ exports.getAll = async (req, res) => {
         {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['name'],
+          attributes: ['id', 'name'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name'],
+            }
+          ]
         },
         {
           model: models.InitiativeContact,
           as: 'contact',
-          attributes: ['fullname'],
+          attributes: ['id', 'fullname', 'email', 'phone', 'keepPrivate', 'publicData'],
         },
         {
           model: models.Dimension,
           as: 'dimensions',
           attributes: ['id', 'name'],
-          through: { attributes: [] },
+          through: { 
+            attributes: [],
+          },
         },
       ]
     })
 
+    const jsonOutput = JSON.parse(JSON.stringify(initiativesResult))
+
+    // CHANGES TO THE INITIATIVE OBJECT IF YOU'RE NOT AN ADMIN GO HERE
+    // ----
+    if(!isAdmin) {
+      // No need to show the contact object, only the publicData object.
+      for(let i = 0; i < jsonOutput.rows.length; i++) {
+        jsonOutput.rows[i].contact = { publicData: jsonOutput.rows[i].contact.publicData }
+      }
+    }
+
     // return the initiatives
-    return res.status(200).json(initiatives);
+    return res.status(200).json(jsonOutput);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al obtener las iniciativas' });
   }
 }
-
 
 exports.create = async (req, res) => {
   try {
@@ -176,11 +254,84 @@ exports.update = async (req, res) => {
 }
 
 exports.delete = async (req, res) => {
+  const t = await models.sequelize.transaction();
+
   try {
     const initiativeId = req.params.id;
 
+    const initiative = await models.Initiative.findByPk(initiativeId);
+
+    if(!initiative) {
+      return res.status(404).json({ message: 'Iniciativa no encontrada' });
+    }
+
+    // delete the initiative dimensions linked
+    await models.InitiativeDimension.destroy({
+      where: {
+        initiativeId: initiativeId,
+      },
+      transaction: t,
+    });
+
+    const contactIdToDelete = initiative.contactId;
+    // delete the initiative
+    await initiative.destroy({ transaction: t });
+
+    await models.InitiativeContact.destroy({
+      where: {
+        id: contactIdToDelete,
+      },
+      transaction: t,
+    });
+
+    await t.commit();
+
+    return res.status(200).json({ message: 'Iniciativa eliminada' });
   } catch (error) {
+    await t.rollback();
     console.error(error);
     res.status(500).json({ message: 'Error al eliminar la iniciativa' });
+  }
+}
+
+exports.publish = async (req, res) => {
+  try {
+    const initiativeId = req.params.id;
+
+    const initiative = await models.Initiative.findByPk(initiativeId);
+
+    if(!initiative) {
+      return res.status(404).json({ message: 'Iniciativa no encontrada' });
+    }
+
+    initiative.publishedAt = dayjs().format('YYYY-MM-DD HH:mm:ss');
+
+    await initiative.save();
+
+    return res.status(200).json({ message: 'Iniciativa publicada' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al publicar la iniciativa' });
+  }
+}
+
+exports.unpublish = async (req, res) => {
+  try {
+    const initiativeId = req.params.id;
+
+    const initiative = await models.Initiative.findByPk(initiativeId);
+
+    if(!initiative) {
+      return res.status(404).json({ message: 'Iniciativa no encontrada' });
+    }
+
+    initiative.publishedAt = null;
+
+    await initiative.save();
+
+    return res.status(200).json({ message: 'Iniciativa despublicada' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al despublicar la iniciativa' });
   }
 }

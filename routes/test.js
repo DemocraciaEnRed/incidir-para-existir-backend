@@ -4,7 +4,9 @@ const models = require('../models');
 const mailer = require('../services/mailer');
 const router = express.Router();
 const { faker } = require('@faker-js/faker');
-
+const uploader = require('../middlewares/s3');
+const { query, check } = require('express-validator');
+const validate = require('../middlewares/validate');
 
 router.get('/', (req, res) => {
   try {
@@ -14,6 +16,23 @@ router.get('/', (req, res) => {
     return res.status(500).json({message: error.message})
   }
 })
+
+// ids is a string of comma separated integers
+router.get('/dimensions', 
+  [
+    query('id.*').isInt().withMessage('id must be an array of integers'),
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      console.log(req.query.id)
+      return res.status(200).json(req.query.id)
+    } catch (error) {
+      console.error(error)
+      return res.status(500).json({message: error.message})
+    }
+  }
+)
 
 router.get('/cities', async (req, res) => {
   try {
@@ -37,7 +56,7 @@ router.get('/verifyaccount', async (req, res) => {
   }
 })
 
-router.get('/create-initiative', async (req, res) => {
+router.get('/create-initiatives', async (req, res) => {
   try {
 
     const dimensions = await models.Dimension.findAll()
@@ -56,6 +75,7 @@ router.get('/create-initiative', async (req, res) => {
         name: faker.lorem.sentence({min: 4, max: 15}),
         description: faker.lorem.sentence({min: 10, max: 50}),
         needsAndOffers: faker.lorem.sentence({min: 20, max: 90}),
+        publishedAt: new Date(),
       }
       const subdivisions = await models.Subdivision.findAll({include: 'city'})
       // console.log(JSON.stringify(subdivisions,null,2))
@@ -116,7 +136,7 @@ router.get('/create-challenges', async (req, res) => {
       const challenge = {
         needsAndChallenges: faker.lorem.sentence({min: 20, max: 90}),
         proposal: faker.lorem.sentence({min: 20, max: 90}),
-        inWords: faker.lorem.sentence({min: 20, max: 90}),
+        inWords: faker.lorem.words({min: 1, max: 2})
       }
 
       // get a random subdivision
@@ -138,5 +158,17 @@ router.get('/create-challenges', async (req, res) => {
     return res.status(500).json({message: error.message})
   }
 })
+
+
+router.post('/file-test', uploader.single('file'), async (req, res) => {
+  try {
+    console.log(req.file)
+    return res.status(200).json({message: 'File uploaded successfully', file: req.file })
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({message: error.message})
+  }
+})
+
 
 module.exports = router;

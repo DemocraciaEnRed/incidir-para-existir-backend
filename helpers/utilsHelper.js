@@ -1,5 +1,9 @@
 const models = require('../models');
 
+exports.isAdmin = (user) => {
+  return user && user.role === 'admin';
+}
+
 exports.getConfigs = async (keys) => {
   try {
     const configs = await models.Config.findAll({

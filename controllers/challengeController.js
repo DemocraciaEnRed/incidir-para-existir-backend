@@ -1,6 +1,105 @@
 const models = require("../models");
 const msg = require("../utils/messages");
 
+exports.fetch = async (req, res) => {
+ try {
+    // get from query params page and limit (if not provided, default to 1 and 10)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const subdivisionId = req.query.subdivision || null;
+    const dimensionId = req.query.dimension || null;
+    
+    // calculateOffset
+    const offset = (page - 1) * limit;
+
+    const whereQuery = {};
+
+    if(dimensionId) {
+      whereQuery.dimensionId = dimensionId;
+    }
+    if(subdivisionId) {
+      whereQuery.subdivisionId = subdivisionId;
+    }
+
+    const query = {
+      limit: limit,
+      offset: offset,
+      where: whereQuery,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: models.Dimension,
+          as: 'dimension',
+          attributes: ['id','name'],
+        },
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+          attributes: ['id','name'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name'],
+            },
+          ]
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    }
+
+    const entries = await models.Challenge.findAndCountAll(query)
+
+    // return the entries
+    return res.status(200).json(entries);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.fetchOne = async (req, res) => {
+  try {
+    const challengeId = req.params.id || null;
+
+    if (!challengeId) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    const challenge = await models.Challenge.findByPk(challengeId, {
+      include: [
+        {
+          model: models.Dimension,
+          as: "dimension",
+          attributes: ["id", "name"],
+        },
+        {
+          model: models.Subdivision,
+          as: "subdivision",
+          attributes: ["id", "name"],
+          include: [
+            {
+              model: models.City,
+              as: "city",
+              attributes: ["id", "name"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!challenge) {
+      return res.status(404).json({ message: msg.error.notFound });
+    }
+
+    return res.status(200).json(challenge);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  } 
+};
+
 exports.create = async (req, res) => {
   try {
     const {
@@ -21,6 +120,30 @@ exports.create = async (req, res) => {
     });
 
     return res.status(201).json(blogEntry);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+};
+
+exports.delete = async (req, res) => {
+  try {
+    const challengeId = req.params.id || null;
+
+    if (!challengeId) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    const challenge = await models.Challenge.findByPk(challengeId);
+
+    if (!challenge) {
+      return res.status(404).json({ message: msg.error.notFound });
+    }
+
+    await challenge.destroy();
+
+    return res.status(204).send();
+
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });
