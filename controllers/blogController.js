@@ -53,7 +53,7 @@ exports.fetch = async (req, res) => {
   }
 }
 
-exports.fetchOne = async (req, res) => {
+exports.fetchOneBySlug = async (req, res) => {
   try {
     // get query param slug
     const slug = req.params.slug || null;
@@ -79,9 +79,152 @@ exports.fetchOne = async (req, res) => {
       ]
     });
 
+    if(!entry) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
     return res.status(200).json(entry);
   } catch (error) {
     console.error(error)
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.fetchOneById = async (req, res) => {
+  try {
+    // get query param slug
+    const id = req.params.id || null;
+
+    if(!id) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // find the entry
+    const entry = await models.BlogEntry.findByPk(id, {
+      include: [
+        {
+          model: models.BlogCategory,
+          as: 'category',
+          attributes: ['id', 'name'],
+        },
+        {
+          model: models.BlogSection,
+          as: 'section',
+          attributes: ['id', 'name'],
+        },
+      ]
+    });
+
+    if(!entry) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    return res.status(200).json(entry);
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+
+exports.create = async (req, res) => {
+  try {
+    // get data from body
+    const { title, slug, subtitle, text, categoryId, sectionId } = req.body;
+    
+    // validate if category exists
+    const category = await models.BlogCategory.findByPk(categoryId);
+    if(!category) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // validate if section exists
+    const section = await models.BlogSection.findByPk(sectionId);
+    if(!section) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // create the entry
+    const entry = await models.BlogEntry.create({
+      title,
+      slug,
+      subtitle,
+      imageUrl: req.file ? req.file.location : null,
+      text,
+      categoryId,
+      sectionId,
+    });
+
+    return res.status(201).json(entry);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.update = async (req, res) => {
+  try {
+    // get query param slug
+    const id = req.params.id || null;
+
+    if(!id) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // find the entry
+    const entry = await models.BlogEntry.findByPk(id);
+
+    // validate if category exists
+    const category = await models.BlogCategory.findByPk(req.body.categoryId);
+    if(!category) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // validate if section exists
+    const section = await models.BlogSection.findByPk(req.body.sectionId);
+    if(!section) { 
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // update the entry
+    entry.title = req.body.title;
+    entry.slug = req.body.slug;
+    entry.subtitle = req.body.subtitle;
+    entry.text = req.body.text;
+    if(req.file){
+      entry.imageUrl = req.file.location;
+    }
+    entry.categoryId = req.body.categoryId;
+    entry.sectionId = req.body.sectionId;
+    await entry.save();
+
+    // return the updated entry
+    return res.status(200).json(entry);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.delete = async (req, res) => {
+  try {
+    // get query param slug
+    const id = req.params.id || null;
+
+    if(!id) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    // find the entry
+    const entry = await models.BlogEntry.findByPk(id);
+
+    // delete the entry
+    await entry.destroy();
+
+    // return the entry
+    return res.status(200).json(entry);
+  } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: msg.error.default });
   }
 }
