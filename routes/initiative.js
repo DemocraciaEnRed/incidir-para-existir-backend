@@ -31,7 +31,6 @@ router.get('/',
 )
 
 router.post('/',
-  authorize(),
   [
     check('name').isString().withMessage(msg.validationError.string),
     check('description').isString().withMessage(msg.validationError.string),

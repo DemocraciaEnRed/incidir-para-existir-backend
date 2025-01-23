@@ -136,22 +136,6 @@ exports.create = async (req, res) => {
       dimensionIds,
       subdivisionId
     } = req.body;
-    const userId = req.user.id;
-
-    // get the user
-    const user = await models.User.findOne({
-      where: { id: userId },
-      include: [
-        {
-          model: models.Subdivision,
-          as: 'subdivision',
-        }
-      ]
-    });
-
-    if(!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
 
     // get the dimensions
     const dimensions = await models.Dimension.findAll({
@@ -160,9 +144,15 @@ exports.create = async (req, res) => {
       }
     });
 
-    // TODO: check if the subdivisionId exists and the city of the subdivision is the same as the user's city
+    // check if the subdivisionId exists
+    const subdivision = await models.Subdivision.findByPk(subdivisionId);
+
+    if(!subdivision) {
+      return res.status(404).json({ message: 'Subdivisión no encontrada' });
+    }
 
     const t = await models.sequelize.transaction();
+
     try {
       // create the contact
       const contact = {
@@ -181,7 +171,7 @@ exports.create = async (req, res) => {
         needsAndOffers,
         contactId: newContact.id,
         subdivisionId: subdivisionId,
-        authorId: user.id,
+        authorId: null,
       }
 
       const newInitiative = await models.Initiative.create(initiative, { transaction: t });
