@@ -14,7 +14,7 @@ module.exports = passport => {
 		new JwtStrategy(opts, (jwt_payload, done) => {
 			console.log(jwt_payload)
 			User.findOne({
-				attributes: ['id', 'firstName', 'lastName', 'role', 'subdivisionId'],
+				attributes: ['id', 'firstName', 'lastName', 'fullName', 'role', 'subdivisionId'],
 				include: {
 					model: Subdivision,
 					as: 'subdivision',
