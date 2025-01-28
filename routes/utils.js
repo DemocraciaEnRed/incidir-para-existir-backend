@@ -46,16 +46,4 @@ router.get('/cities',
 	UtilsController.getCities
 )
 
-
-// -----------------------------------------------
-
-router.get('/somethingForUsers',
-	authorize(),
-	UtilsController.somethingForUsers
-)
-
-router.get('/generateBlogPosts',
-		UtilsController.generateBlogPosts
-)
-
 module.exports = router;
