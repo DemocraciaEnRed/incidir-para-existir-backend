@@ -95,7 +95,7 @@ exports.fetch = async (req, res) => {
         {
           model: models.InitiativeContact,
           as: 'contact',
-          attributes: ['id', 'fullname', 'email', 'phone', 'keepPrivate', 'publicData'],
+          attributes: ['id', 'fullname', 'email', 'phone', 'keepEmailPrivate', 'keepPhonePrivate', 'publicData'],
         },
         {
           model: models.Dimension,
@@ -197,8 +197,9 @@ exports.create = async (req, res) => {
       const contact = {
         fullname: req.body.contact.fullname,
         email: req.body.contact.email,
+        keepEmailPrivate: req.body.contact.keepEmailPrivate,
         phone: req.body.contact.phone,
-        keepPrivate: req.body.contact.keepPrivate,
+        keepPhonePrivate: req.body.contact.keepPhonePrivate,
       }
 
       const newContact = await models.InitiativeContact.create(contact, { transaction: t });
