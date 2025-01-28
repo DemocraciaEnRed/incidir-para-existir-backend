@@ -9,6 +9,13 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.DataTypes.INTEGER
       },
+      authorId: {
+        type: Sequelize.DataTypes.INTEGER,
+        references: {
+          model: 'Users',
+          key: 'id'
+        }
+      },
       sectionId: {
         type: Sequelize.DataTypes.INTEGER,
         references: {
