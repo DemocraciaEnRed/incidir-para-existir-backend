@@ -53,6 +53,19 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    source: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'web',
+    },
+    latitude: {
+      type: DataTypes.DECIMAL(10, 8),
+      allowNull: true,
+    },
+    longitude: {
+      type: DataTypes.DECIMAL(11, 8),
+      allowNull: true,
+    },
     name: {
       type: DataTypes.STRING,
       allowNull: false,

@@ -1,5 +1,4 @@
 const { Sequelize } = require('sequelize');
-const { publish } = require('../controllers/initiativeController');
 
 module.exports = {
   async up({context: queryInterface}) {
@@ -34,6 +33,19 @@ module.exports = {
           model: 'Subdivisions',
           key: 'id'
         }
+      },
+      source: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: true,
+        defaultValue: 'web'
+      },
+      latitude: {
+        type: Sequelize.DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitude: {
+        type: Sequelize.DataTypes.DECIMAL(11, 8),
+        allowNull: true,
       },
       name: {
         type: Sequelize.DataTypes.STRING,
