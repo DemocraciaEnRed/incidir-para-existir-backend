@@ -29,6 +29,10 @@ module.exports = {
         defaultValue: 'user',
         allowNull: false,
       },
+      imageUrl: {
+        type: Sequelize.DataTypes.STRING(510),
+        allowNull: true
+      },
       subdivisionId: {
         type: Sequelize.DataTypes.INTEGER,
         allowNull: true,
