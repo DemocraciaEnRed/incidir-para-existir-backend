@@ -29,16 +29,6 @@ router.get('/',
   UserController.fetch
 )
 
-router.get('/setup',
-  requiresAnon,
-  [
-    query('magic').optional().isString().isLength({ min: 1 }),
-  ],
-  validate,
-  UserController.getSetup
-)
-// -----------------------------------------------
-
 router.post('/', 
   authorize(constants.ROLES.ADMINISTRATOR),
   [
@@ -52,6 +42,18 @@ router.post('/',
   UserController.createUser
 )
 
+// -----------------------------------------------
+
+router.get('/setup',
+  requiresAnon,
+  [
+    query('magic').optional().isString().isLength({ min: 1 }),
+  ],
+  validate,
+  UserController.getSetup
+)
+
+
 router.post('/setup',
   requiresAnon,
   [
@@ -64,5 +66,7 @@ router.post('/setup',
   validate,
   UserController.postSetup
 )
+
+// -----------------------------------------------
 
 module.exports = router;
