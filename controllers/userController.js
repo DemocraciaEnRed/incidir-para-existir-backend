@@ -22,6 +22,7 @@ exports.fetch = async (req, res) => {
         "fullName",
         "email",
         "role",
+        "imageUrl",
         "emailVerified",
         "verifiedAt",
         "lastLogin",
@@ -117,3 +118,24 @@ exports.postSetup = async (req, res) => {
     return res.status(500).json({ message: "An error occurred" });
   }
 };
+
+exports.createUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, role, password } = req.body;
+
+    const user = await models.User.create({
+      firstName,
+      lastName,
+      email,
+      role,
+      password,
+      emailVerified: true,
+      verifiedAt: new Date(),
+    });
+
+    return res.status(201).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+}

@@ -4,7 +4,7 @@ const { check, query } = require('express-validator');
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
 const requiresAnon = require('../middlewares/requiresAnon');
-const userController = require('../controllers/userController');
+const UserController = require('../controllers/userController');
 const msg = require('../utils/messages');
 const constants = require('../services/constants');
 
@@ -26,7 +26,7 @@ router.get('/',
     query('limit').optional().isInt().withMessage(msg.validationError.integer),
   ], 
   validate,
-  userController.fetch
+  UserController.fetch
 )
 
 router.get('/setup',
@@ -35,9 +35,22 @@ router.get('/setup',
     query('magic').optional().isString().isLength({ min: 1 }),
   ],
   validate,
-  userController.getSetup
+  UserController.getSetup
 )
 // -----------------------------------------------
+
+router.post('/', 
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    check('firstName').isString(),
+    check('lastName').isString(),
+    check('email').isEmail(),
+    check('role').isString(),
+    check('password').isString(),
+  ],
+  validate,
+  UserController.createUser
+)
 
 router.post('/setup',
   requiresAnon,
@@ -49,7 +62,7 @@ router.post('/setup',
     check('magic').isString(),
   ],
   validate,
-  userController.postSetup
+  UserController.postSetup
 )
 
 module.exports = router;
