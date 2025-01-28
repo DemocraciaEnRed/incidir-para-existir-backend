@@ -121,6 +121,11 @@ module.exports = (sequelize) => {
       defaultValue: false,
       allowNull: false,
     },
+    disabled: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
+    },
     verifiedAt: {
       type: DataTypes.DATE,
       allowNull: true,

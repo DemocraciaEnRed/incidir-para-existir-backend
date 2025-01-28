@@ -56,6 +56,11 @@ module.exports = {
         type: Sequelize.DataTypes.DATE,
         allowNull: true,
       },
+      disabled: {
+        type: Sequelize.DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         defaultValue: Sequelize.fn('now'),

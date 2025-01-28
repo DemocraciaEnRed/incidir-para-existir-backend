@@ -1,5 +1,6 @@
 const models = require("../models");
 const mailer = require("../services/mailer");
+const UtilsHelper = require("../helpers/utilsHelper");
 
 exports.fetch = async (req, res) => {
   try {
@@ -24,6 +25,7 @@ exports.fetch = async (req, res) => {
         "role",
         "imageUrl",
         "emailVerified",
+        "disabled",
         "verifiedAt",
         "lastLogin",
       ],
@@ -31,12 +33,12 @@ exports.fetch = async (req, res) => {
         {
           model: models.Subdivision,
           as: "subdivision",
-          attributes: ["id", "name"],
+          attributes: ["id", "name", "type", "latitude", "longitude"],
           include: [
             {
               model: models.City,
               as: "city",
-              attributes: ["id", "name"],
+              attributes: ["id", "name", "latitude", "longitude"],
             },
           ],
         },
@@ -49,6 +51,221 @@ exports.fetch = async (req, res) => {
     return res.status(500).json({ message: "An error occurred" });
   }
 };
+
+exports.fetchAll = async (req, res) => {
+  try {
+    const users = await models.User.findAll({
+      attributes: [
+        "id",
+        "firstName",
+        "lastName",
+        "fullName",
+        "email",
+        "role",
+        "imageUrl",
+        "emailVerified",
+        "disabled",
+        "verifiedAt",
+        "lastLogin",
+      ],
+      include: [
+        {
+          model: models.Subdivision,
+          as: "subdivision",
+          attributes: ["id", "name", "type", "latitude", "longitude"],
+          include: [
+            {
+              model: models.City,
+              as: "city",
+              attributes: ["id", "name", "latitude", "longitude"],
+            },
+          ],
+        },
+      ],
+    });
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+};
+        
+
+
+exports.fetchOne = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // check if there is a req.user and if the user is an admin
+    const isAdmin = UtilsHelper.isAdmin(req.user);
+
+    let attributes = []
+    if (isAdmin) {
+      attributes = [
+        "id",
+        "firstName",
+        "lastName",
+        "fullName",
+        "email",
+        "role",
+        "imageUrl",
+        "emailVerified",
+        "disabled",
+        "verifiedAt",
+        "lastLogin",
+      ];
+    } else {
+      attributes = [
+        "id",
+        "firstName",
+        "lastName",
+        "fullName",
+        'disabled',
+        "imageUrl",
+      ];
+    }
+
+    const user = await models.User.findByPk(id, {
+      attributes: attributes,
+      include: [
+        {
+          model: models.Subdivision,
+          as: "subdivision",
+          attributes: ["id", "name", "type", "latitude", "longitude"],
+          include: [
+            {
+              model: models.City,
+              as: "city",
+              attributes: ["id", "name", "latitude", "longitude"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json(user);
+    
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+exports.createUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, role, password, subdivisionId } = req.body;
+
+    if(subdivisionId){
+      // check existance
+      const subdivision = await models.Subdivision.findByPk(subdivisionId);
+      if(!subdivision){
+        return res.status(404).json({ message: "Subdivision not found" });
+      }
+    }
+
+    const user = await models.User.create({
+      firstName,
+      lastName,
+      email,
+      role,
+      password,
+      subdivisionId,
+      emailVerified: true,
+      verifiedAt: new Date(),
+    });
+
+    return res.status(201).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firstName, lastName, email, role, subdivisionId } = req.body;
+
+    const user = await models.User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if(subdivisionId){
+      // check existance
+      const subdivision = await models.Subdivision.findByPk(subdivisionId);
+      if(!subdivision){
+        return res.status(404).json({ message: "Subdivision not found" });
+      }
+    }
+
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.email = email;
+    user.role = role;
+    user.subdivisionId = subdivisionId;
+    await user.save();
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+}
+
+
+
+
+exports.disableUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await models.User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.emailVerified = false;
+    user.verifiedAt = null;
+    await user.save();
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+exports.enableUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await models.User.findByPk(id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.emailVerified = true;
+    user.verifiedAt = new Date();
+    await user.save();
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+// SETUP Stuff ----------
+
 
 exports.getSetup = async (req, res) => {
   try {
@@ -118,24 +335,3 @@ exports.postSetup = async (req, res) => {
     return res.status(500).json({ message: "An error occurred" });
   }
 };
-
-exports.createUser = async (req, res) => {
-  try {
-    const { firstName, lastName, email, role, password } = req.body;
-
-    const user = await models.User.create({
-      firstName,
-      lastName,
-      email,
-      role,
-      password,
-      emailVerified: true,
-      verifiedAt: new Date(),
-    });
-
-    return res.status(201).json(user);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "An error occurred" });
-  }
-}

@@ -1,5 +1,5 @@
 const express = require('express');
-const { check, query } = require('express-validator');
+const { check, query, body, param } = require('express-validator');
 
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
@@ -14,7 +14,12 @@ const router = express.Router();
 // -----------------------------------------------
 // BASE   /user
 // -----------------------------------------------
-// GET   /
+// GET    /
+// POST   /
+// GET    /:id
+// PUT    /:id
+// PUT    /:id/enable
+// PUT    /:id/disable
 // GET    /setup?magic=
 // POST   /setup
 // -----------------------------------------------
@@ -29,6 +34,11 @@ router.get('/',
   UserController.fetch
 )
 
+router.get('/all',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  UserController.fetchAll
+)
+
 router.post('/', 
   authorize(constants.ROLES.ADMINISTRATOR),
   [
@@ -37,9 +47,49 @@ router.post('/',
     check('email').isEmail(),
     check('role').isString(),
     check('password').isString(),
+    check('subdivisionId').optional().isInt(),
   ],
   validate,
   UserController.createUser
+)
+
+router.get('/:id',
+  [
+    check('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  UserController.fetchOne
+)
+
+router.put('/:id',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    param('id').isInt().withMessage(msg.validationError.integer),
+    body('firstName').isString().optional(),
+    body('lastName').isString().optional(),
+    body('email').isEmail().optional(),
+    body('role').isString().optional(),
+  ],
+  validate,
+  UserController.updateUser
+)
+
+router.put('/:id/enable',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    param('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  UserController.enableUser
+)
+
+router.put('/:id/disable',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    param('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  UserController.disableUser
 )
 
 // -----------------------------------------------
@@ -57,11 +107,11 @@ router.get('/setup',
 router.post('/setup',
   requiresAnon,
   [
-    check('firstName').isString(),
-    check('lastName').isString(),
-    check('email').isEmail(),
-    check('password').isString(),
-    check('magic').isString(),
+    body('firstName').isString(),
+    body('lastName').isString(),
+    body('email').isEmail(),
+    body('password').isString(),
+    body('magic').isString(),
   ],
   validate,
   UserController.postSetup

@@ -69,6 +69,10 @@ exports.login = async (req, res) => {
 			return res.status(401).json({ message: 'El email no ha sido verificado' });
 		}
 
+		if(user.disabled) {
+			return res.status(401).json({ message: 'La cuenta ha sido deshabilitada. Contacte a un administrador' });
+		}
+
 		// login successful, write token, and send back to user
 		const token = await user.generateJWT();
 
