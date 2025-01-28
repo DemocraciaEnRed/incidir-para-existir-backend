@@ -17,6 +17,29 @@ exports.getConfigs = async (req, res) => {
   }
 }
 
+exports.setConfigs = async (req, res) => {
+  try {
+    const { key, type, value } = req.body;
+
+    const config = await models.Config.findOne({
+      where: { key: key }
+    });
+
+    if (!config) {
+      return res.status(404).json({ message: msg.error.notFound });
+    }
+
+    config.type = type || config.type;
+    config.value = value.toString();
+    await config.save();
+
+    return res.status(200).json(config);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
 exports.getSubdivisions = async (req, res) => {
   try {
     // get all subdivisions

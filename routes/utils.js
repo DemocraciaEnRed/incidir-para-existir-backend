@@ -1,5 +1,5 @@
 const express = require('express');
-const { check } = require('express-validator');
+const { check, query, body } = require('express-validator');
 
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
@@ -39,7 +39,20 @@ router.get('/blog-sections',
 );
 
 router.get('/configs', 
+	[
+		check('key').isString(),
+	],
 	UtilsController.getConfigs
+);
+
+router.put('/configs', 
+	[
+		body('key').isString(),
+		body('type').optional().isString(),
+		body('value').isString(),
+	],
+	validate,
+	UtilsController.setConfigs
 );
 
 router.get('/cities',
