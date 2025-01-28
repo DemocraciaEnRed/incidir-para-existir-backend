@@ -17,6 +17,14 @@ module.exports = (sequelize, DataTypes) => {
   }
   City.init({
     name: DataTypes.STRING,
+    latitude: {
+      type: DataTypes.DECIMAL(10, 8),
+      allowNull: true,
+    },
+    longitude: {
+      type: DataTypes.DECIMAL(11, 8),
+      allowNull: true,
+    },
   }, {
     sequelize,
     timestamps: true,

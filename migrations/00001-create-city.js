@@ -13,6 +13,14 @@ module.exports = {
         type: Sequelize.DataTypes.STRING,
         allowNull: false
       },
+      latitude: {
+        type: Sequelize.DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitude: {
+        type: Sequelize.DataTypes.DECIMAL(11, 8),
+        allowNull: true,
+      },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         defaultValue: Sequelize.fn('now'),
@@ -26,9 +34,17 @@ module.exports = {
     });
     await queryInterface.bulkInsert('Cities', [
       // cali
-      { name: 'Cali' },
+      { 
+        name: 'Cali',
+        latitude: 3.451647,
+        longitude: -76.531982
+      },
       // bogota
-      { name: 'Bogota' },
+      { 
+        name: 'Bogota',
+        latitude: 4.710989,
+        longitude: -74.072090
+       },
     ]);
   },
   async down({context: queryInterface}) {
