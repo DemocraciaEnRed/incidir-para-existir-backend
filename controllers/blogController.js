@@ -39,6 +39,11 @@ exports.fetch = async (req, res) => {
           as: 'section',
           attributes: ['name'],
         },
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['id', 'firstName', 'lastName', 'fullName', 'imageUrl', 'role'],
+        }
       ],
       order: [['createdAt', 'DESC']],
     }
@@ -76,6 +81,11 @@ exports.fetchOneBySlug = async (req, res) => {
           as: 'section',
           attributes: ['id', 'name'],
         },
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['id', 'firstName', 'lastName', 'fullName', 'imageUrl', 'role'],
+        }
       ]
     });
 
@@ -112,6 +122,11 @@ exports.fetchOneById = async (req, res) => {
           as: 'section',
           attributes: ['id', 'name'],
         },
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['id', 'firstName', 'lastName', 'fullName', 'imageUrl', 'role'],
+        }
       ]
     });
 
@@ -130,7 +145,7 @@ exports.fetchOneById = async (req, res) => {
 exports.create = async (req, res) => {
   try {
     // get data from body
-    const { title, slug, subtitle, text, categoryId, sectionId } = req.body;
+    const { title, slug, subtitle, text, categoryId, sectionId, authorId } = req.body;
     
     // validate if category exists
     const category = await models.BlogCategory.findByPk(categoryId);
@@ -144,8 +159,15 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: msg.error.default });
     }
 
+    // validate if author exists
+    const author = await models.User.findByPk(authorId);
+    if(!author) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
     // create the entry
     const entry = await models.BlogEntry.create({
+      authorId,
       title,
       slug,
       subtitle,
@@ -186,6 +208,12 @@ exports.update = async (req, res) => {
       return res.status(400).json({ message: msg.error.default });
     }
 
+    // validate if author exists
+    const author = await models.User.findByPk(req.body.authorId);
+    if(!author) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
     // update the entry
     entry.title = req.body.title;
     entry.slug = req.body.slug;
@@ -194,6 +222,7 @@ exports.update = async (req, res) => {
     if(req.file){
       entry.imageUrl = req.file.location;
     }
+    entry.authorId = req.body.authorId;
     entry.categoryId = req.body.categoryId;
     entry.sectionId = req.body.sectionId;
     await entry.save();
