@@ -105,6 +105,13 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    imageUrl: {
+      type: DataTypes.STRING(510),
+      validate: {
+        isUrl: true
+      },
+      allowNull: true
+    },
     subdivisionId: {
       type: DataTypes.INTEGER,
       allowNull: true,
