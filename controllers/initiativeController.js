@@ -127,6 +127,45 @@ exports.fetch = async (req, res) => {
   }
 }
 
+exports.fetchOne = async (req, res) => {
+  try {
+    const initiativeId = req.params.id;
+
+    const initiative = await models.Initiative.findByPk(initiativeId, {
+      include: [
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['firstName', 'lastName'],
+        },
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+          attributes: ['name'],
+        },
+        {
+          model: models.InitiativeContact,
+          as: 'contact',
+          attributes: ['fullname'],
+        },
+        {
+          model: models.Dimension,
+          as: 'dimensions',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ]
+    })
+
+    // return the initiative
+    return res.status(200).json(initiative);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener la iniciativa' });
+  }
+}
+
 exports.create = async (req, res) => {
   try {
     const { 

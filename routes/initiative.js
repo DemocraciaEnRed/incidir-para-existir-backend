@@ -48,6 +48,14 @@ router.post('/',
   InitiativeController.create
 );
 
+router.get('/:id',
+  [
+    check('id').isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  InitiativeController.fetchOne
+);
+
 router.delete('/:id',
   authorize(constants.ROLES.ADMINISTRATOR),
   [
