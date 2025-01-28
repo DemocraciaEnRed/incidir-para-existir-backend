@@ -32,11 +32,16 @@ module.exports = (sequelize) => {
         isEmail: true,
       },
     },
+    keepEmailPrivate: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     phone: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    keepPrivate: {
+    keepPhonePrivate: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
@@ -46,8 +51,8 @@ module.exports = (sequelize) => {
       get() {
         return {
           fullname: this.fullname,
-          email:  this.keepPrivate ? 'Privado' : this.email,
-          phone: this.keepPrivate ? 'Privado' : this.phone,
+          email:  this.keepEmailPrivate ? 'Privado' : this.email,
+          phone: this.keepPhonePrivate ? 'Privado' : this.phone,
         };
       },
       set(val) {

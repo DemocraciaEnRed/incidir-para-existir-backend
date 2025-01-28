@@ -20,11 +20,16 @@ module.exports = {
           isEmail: true,
         },
       },
+      keepEmailPrivate: {
+        type: Sequelize.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
       phone: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false,
       },
-      keepPrivate: {
+      keepPhonePrivate: {
         type: Sequelize.DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
