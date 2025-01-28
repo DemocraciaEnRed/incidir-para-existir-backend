@@ -25,6 +25,19 @@ module.exports = {
           key: 'id'
         }
       },
+      source: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: true,
+        defaultValue: 'web'
+      },
+      latitude: {
+        type: Sequelize.DataTypes.DECIMAL(10, 8),
+        allowNull: true,
+      },
+      longitude: {
+        type: Sequelize.DataTypes.DECIMAL(11, 8),
+        allowNull: true,
+      },
       needsAndChallenges: {
         type: Sequelize.DataTypes.TEXT,
         allowNull: false,
