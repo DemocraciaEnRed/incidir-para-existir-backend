@@ -25,12 +25,7 @@ module.exports = {
       }
     });
     await queryInterface.bulkInsert('BlogCategories', [
-      { name: 'Economia', },
-      { name: 'Politica', },
-      { name: 'Deportes', },
-      { name: 'Cultura', },
-      { name: 'Tecnologia', },
-      { name: 'Entretenimiento', },
+      { name: 'General', },
     ]);
   },
   async down({context: queryInterface}) {
