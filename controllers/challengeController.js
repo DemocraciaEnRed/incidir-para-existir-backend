@@ -76,12 +76,12 @@ exports.fetchOne = async (req, res) => {
         {
           model: models.Subdivision,
           as: "subdivision",
-          attributes: ["id", "name"],
+          attributes: ["id", "name", "type", "latitude", "longitude"],
           include: [
             {
               model: models.City,
               as: "city",
-              attributes: ["id", "name"],
+              attributes: ["id", "name", "latitude", "longitude" ],
             },
           ],
         },
