@@ -43,6 +43,14 @@ router.post('/',
 	ChallengeController.create
 );
 
+router.get('/:id',
+	[
+		check('id').isInt().withMessage(msg.validationError.integer),
+	],
+	validate,
+	ChallengeController.fetchOne
+);
+
 router.delete('/:id',
 	[
 		check('id').isInt().withMessage(msg.validationError.integer),
@@ -51,13 +59,6 @@ router.delete('/:id',
 	ChallengeController.delete
 );
 
-router.get('/:id',
-	[
-		check('id').isInt().withMessage(msg.validationError.integer),
-	],
-	validate,
-	ChallengeController.fetchOne
-);
 
 router.get('/stats/chart/count-by-subdivision/:cityId?',
 	[
