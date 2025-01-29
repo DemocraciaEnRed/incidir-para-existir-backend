@@ -166,6 +166,50 @@ exports.fetchOne = async (req, res) => {
   }
 }
 
+exports.fetchAllGeolocalized = async (req, res) => {
+  try {
+    const initiatives = await models.Initiative.findAll({
+      where: {
+        latitude: {
+          [Op.not]: null,
+        },
+        longitude: {
+          [Op.not]: null,
+        },
+      },
+      include: [
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['firstName', 'lastName'],
+        },
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+          attributes: ['name'],
+        },
+        {
+          model: models.InitiativeContact,
+          as: 'contact',
+          attributes: ['fullname'],
+        },
+        {
+          model: models.Dimension,
+          as: 'dimensions',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ]
+    })
+
+    return res.status(200).json(initiatives);
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener las iniciativas' });
+  }
+}
+
 exports.create = async (req, res) => {
   try {
     const { 

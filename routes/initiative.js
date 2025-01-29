@@ -48,6 +48,10 @@ router.post('/',
   InitiativeController.create
 );
 
+router.get('/list/geolocalized',
+  InitiativeController.fetchAllGeolocalized
+);
+
 router.get('/:id',
   [
     check('id').isInt().withMessage(msg.validationError.integer),
