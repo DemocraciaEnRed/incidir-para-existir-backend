@@ -62,14 +62,15 @@ exports.createInitiatives = async (req, res) => {
       const randomSubdivision = subdivisions[Math.floor(Math.random() * subdivisions.length)]
 
       const setCoordinates = faker.datatype.boolean(0.75)
-      const [fakeLatitude, fakeLongitude] = faker.location.nearbyGPSCoordinate({
+      const coordinates = faker.location.nearbyGPSCoordinate({
         origin: [randomSubdivision.latitude, randomSubdivision.longitude],
         radius: 14,
         isMetric: true
       })
+
       if(setCoordinates) {
-        initiative.latitude = fakeLatitude
-        initiative.longitude = fakeLongitude
+        initiative.latitude = coordinates[0]
+        initiative.longitude = coordinates[1]
       }
 
       const newContact = await models.InitiativeContact.create(contact)
@@ -136,14 +137,14 @@ exports.createChallenges = async (req, res) => {
       const randomDimension = dimensions[Math.floor(Math.random() * dimensions.length)]
 
       const setCoordinates = faker.datatype.boolean(0.75)
-      const [fakeLatitude, fakeLongitude] = faker.location.nearbyGPSCoordinate({
+      const coordinates = faker.location.nearbyGPSCoordinate({
         origin: [randomSubdivision.latitude, randomSubdivision.longitude],
         radius: 14,
         isMetric: true
       })
       if(setCoordinates) {
-        challenge.latitude = fakeLatitude
-        challenge.longitude = fakeLongitude
+        challenge.latitude = coordinates[0]
+        challenge.longitude = coordinates[1]
       }
 
       const newChallenge = await models.Challenge.create({
