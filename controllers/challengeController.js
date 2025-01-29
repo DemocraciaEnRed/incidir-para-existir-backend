@@ -100,6 +100,44 @@ exports.fetchOne = async (req, res) => {
   } 
 };
 
+exports.update = async (req, res) => {
+  try {
+    const challengeId = req.params.id || null;
+
+    if (!challengeId) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    const challenge = await models.Challenge.findByPk(challengeId);
+
+    if (!challenge) {
+      return res.status(404).json({ message: msg.error.notFound });
+    }
+
+    const {
+      dimensionId,
+      subdivisionId,
+      needsAndChallenges,
+      proposal,
+      inWords,
+    } = req.body;
+
+    challenge.dimensionId = dimensionId;
+    challenge.subdivisionId = subdivisionId;
+    challenge.needsAndChallenges = needsAndChallenges;
+    challenge.proposal = proposal;
+    challenge.inWords = inWords;
+
+    await challenge.save();
+
+    return res.status(200).json(challenge);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
 exports.create = async (req, res) => {
   try {
     const {

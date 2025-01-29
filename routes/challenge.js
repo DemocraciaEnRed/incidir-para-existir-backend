@@ -1,11 +1,12 @@
 const express = require('express');
-const { check,query } = require('express-validator');
+const { check,query, param, body } = require('express-validator');
 
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
 const requiresAnon = require('../middlewares/requiresAnon');
 const ChallengeController = require('../controllers/challengeController');
 const msg = require('../utils/messages');
+const constants = require('../services/constants');
 
 // initialize router
 const router = express.Router();
@@ -45,15 +46,29 @@ router.post('/',
 
 router.get('/:id',
 	[
-		check('id').isInt().withMessage(msg.validationError.integer),
+		param('id').isInt().withMessage(msg.validationError.integer),
 	],
 	validate,
 	ChallengeController.fetchOne
 );
 
+router.put('/:id',
+	authorize(constants.ROLES.ADMINISTRATOR),
+	[
+		param('id').isInt().withMessage(msg.validationError.integer),
+		body('dimensionId').isInt().withMessage(msg.validationError.integer),
+		body('subdivisionId').isInt().withMessage(msg.validationError.integer),
+		body('needsAndChallenges').isString().withMessage(msg.validationError.string),
+		body('proposal').isString().withMessage(msg.validationError.string),
+		body('inWords').isString().withMessage(msg.validationError.string),
+	],
+	validate,
+	ChallengeController.update
+);
+
 router.delete('/:id',
 	[
-		check('id').isInt().withMessage(msg.validationError.integer),
+		param('id').isInt().withMessage(msg.validationError.integer),
 	],
 	validate,
 	ChallengeController.delete
@@ -62,7 +77,7 @@ router.delete('/:id',
 
 router.get('/stats/chart/count-by-subdivision/:cityId?',
 	[
-		check('cityId').optional().isInt().withMessage(msg.validationError.integer),
+		param('cityId').optional().isInt().withMessage(msg.validationError.integer),
 	],
 	ChallengeController.statsChartCountBySubdivision
 );
