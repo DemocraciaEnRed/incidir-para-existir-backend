@@ -16,12 +16,13 @@ const router = express.Router();
 // -----------------------------------------------
 // GET    /
 // POST   /
+// GET    /all
+// GET    /setup?magic=
+// POST   /setup
 // GET    /:id
 // PUT    /:id
 // PUT    /:id/enable
 // PUT    /:id/disable
-// GET    /setup?magic=
-// POST   /setup
 // -----------------------------------------------
 
 router.get('/',
@@ -38,6 +39,33 @@ router.get('/all',
   authorize(constants.ROLES.ADMINISTRATOR),
   UserController.fetchAll
 )
+
+// -----------------------------------------------
+
+router.get('/setup',
+  requiresAnon,
+  [
+    query('magic').optional().isString().isLength({ min: 1 }),
+  ],
+  validate,
+  UserController.getSetup
+)
+
+
+router.post('/setup',
+  requiresAnon,
+  [
+    body('firstName').isString(),
+    body('lastName').isString(),
+    body('email').isEmail(),
+    body('password').isString(),
+    body('magic').isString(),
+  ],
+  validate,
+  UserController.postSetup
+)
+
+// -----------------------------------------------
 
 router.post('/', 
   authorize(constants.ROLES.ADMINISTRATOR),
@@ -91,32 +119,5 @@ router.put('/:id/disable',
   validate,
   UserController.disableUser
 )
-
-// -----------------------------------------------
-
-router.get('/setup',
-  requiresAnon,
-  [
-    query('magic').optional().isString().isLength({ min: 1 }),
-  ],
-  validate,
-  UserController.getSetup
-)
-
-
-router.post('/setup',
-  requiresAnon,
-  [
-    body('firstName').isString(),
-    body('lastName').isString(),
-    body('email').isEmail(),
-    body('password').isString(),
-    body('magic').isString(),
-  ],
-  validate,
-  UserController.postSetup
-)
-
-// -----------------------------------------------
 
 module.exports = router;
