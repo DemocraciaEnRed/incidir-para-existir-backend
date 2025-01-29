@@ -26,10 +26,18 @@ module.exports = (sequelize, DataTypes) => {
     latitude: {
       type: DataTypes.DECIMAL(10, 8),
       allowNull: true,
+      // get transform to decimal
+      get() {
+        return parseFloat(this.getDataValue('latitude'));
+      },
     },
     longitude: {
       type: DataTypes.DECIMAL(11, 8),
       allowNull: true,
+      // get transform to decimal
+      get() {
+        return parseFloat(this.getDataValue('longitude'));
+      },
     },
   }, {
     sequelize,

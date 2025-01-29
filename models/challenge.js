@@ -43,10 +43,16 @@ module.exports = (sequelize) => {
     latitude: {
       type: DataTypes.DECIMAL(10, 8),
       allowNull: true,
+      get() {
+        return parseFloat(this.getDataValue('latitude'));
+      },
     },
     longitude: {
       type: DataTypes.DECIMAL(11, 8),
       allowNull: true,
+      get() {
+        return parseFloat(this.getDataValue('longitude'));
+      },      
     },
     needsAndChallenges: {
       type: DataTypes.TEXT,
