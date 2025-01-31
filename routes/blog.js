@@ -1,5 +1,5 @@
 const express = require('express');
-const { check, query } = require('express-validator');
+const { check, param, body, query } = require('express-validator');
 
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
@@ -16,7 +16,8 @@ const router = express.Router();
 // -----------------------------------------------
 // BASE   /blog
 // -----------------------------------------------
-// POST 	/blog
+// GET    /
+// POST 	/
 // -----------------------------------------------
 
 
@@ -38,6 +39,54 @@ router.get('/byId/:id',
   validate,
   BlogController.fetchOneById
 );
+
+router.get('/category',
+  [
+    query('page').optional().isInt().withMessage(msg.validationError.integer),
+    query('limit').optional().isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  BlogController.fetchCategories
+)
+
+router.post('/category',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    body('name').isString().withMessage("El nuevo nombre es requerido"),
+  ],
+  validate,
+  BlogController.createCategory
+)
+
+router.put('/category/:id',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    param('id').not().isEmpty().withMessage('id is required'),
+    body('name').isString().withMessage("El nuevo nombre es requerido"),
+  ],
+  validate,
+  BlogController.updateCategory
+)
+
+router.delete('/category/:id',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    param('id').not().isEmpty().withMessage('id is required'),
+    body('categoryId').isInt().withMessage("El nuevo nombre es requerido"),
+  ],
+  validate,
+  BlogController.deleteCategory
+)
+
+router.get('/section',
+  [
+    query('page').optional().isInt().withMessage(msg.validationError.integer),
+    query('limit').optional().isInt().withMessage(msg.validationError.integer),
+  ],
+  validate,
+  BlogController.fetchSections
+)
+
 
 router.get('/:slug',
   [
@@ -87,5 +136,7 @@ router.delete('/:id',
   validate,
   BlogController.delete
 );
+
+
 
 module.exports = router;
