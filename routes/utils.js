@@ -30,14 +30,6 @@ router.get('/dimensions',
 	UtilsController.getDimensions
 );
 
-router.get('/blog-categories', 
-	UtilsController.getBlogCategories
-);
-
-router.get('/blog-sections', 
-	UtilsController.getBlogSections
-);
-
 router.get('/configs', 
 	[
 		check('key').isString(),
