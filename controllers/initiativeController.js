@@ -83,12 +83,12 @@ exports.fetch = async (req, res) => {
         {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['id', 'name'],
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
           include: [
             {
               model: models.City,
               as: 'city',
-              attributes: ['id','name'],
+              attributes: ['id','name', 'latitude', 'longitude'],
             }
           ]
         },
@@ -141,7 +141,14 @@ exports.fetchOne = async (req, res) => {
         {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['name'],
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name', 'latitude', 'longitude'],
+            }
+          ]
         },
         {
           model: models.InitiativeContact,
@@ -186,7 +193,14 @@ exports.fetchAllGeolocalized = async (req, res) => {
         {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['name'],
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name', 'latitude', 'longitude'],
+            }
+          ]
         },
         {
           model: models.InitiativeContact,
@@ -293,7 +307,14 @@ exports.getById = async (req, res) => {
         {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['name'],
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name', 'latitude', 'longitude'],
+            }
+          ]
         },
         {
           model: models.InitiativeContact,
