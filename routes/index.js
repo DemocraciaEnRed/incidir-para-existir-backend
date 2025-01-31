@@ -7,6 +7,8 @@ const userRoutes = require('./user');
 const initiativeRoutes = require('./initiative');
 const challengeRoutes = require('./challenge');
 const memberRoutes = require('./member');
+const resourceRoutes = require('./resource');
+const reporterRoutes = require('./reporter');
 const faqRoutes = require('./faq');
 const authenticate = require('../middlewares/authenticate');
 
@@ -26,7 +28,9 @@ module.exports = app => {
 	app.use('/initiatives', initiativeRoutes);
 	app.use('/challenges', challengeRoutes);
 	app.use('/members', memberRoutes);
+	app.use('/resources', resourceRoutes);
 	app.use('/test', testRoutes);
+	app.use('/reporter', reporterRoutes)
 };
 
 
