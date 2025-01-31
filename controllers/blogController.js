@@ -240,12 +240,12 @@ exports.delete = async (req, res) => {
     // get query param slug
     const id = req.params.id || null;
 
-    if(!id) {
-      return res.status(400).json({ message: msg.error.default });
-    }
-
     // find the entry
     const entry = await models.BlogEntry.findByPk(id);
+
+    if(!entry) {
+      return res.status(400).json({ message: msg.error.default });
+    }
 
     // delete the entry
     await entry.destroy();
@@ -255,5 +255,145 @@ exports.delete = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+
+exports.fetchCategories = async (req, res) => {
+  try {
+
+    // get from query params page and limit (if not provided, default to 1 and 10)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // calculateOffset
+    const offset = (page - 1) * limit;
+
+    const whereQuery = {};
+
+    const query = {
+      limit: limit,
+      offset: offset,
+      where: whereQuery,
+      attributes: ['id', 'name'],
+      order: [['createdAt', 'ASC']],
+    }
+
+    const entries = await models.BlogCategory.findAndCountAll(query)
+
+    return res.status(200).json(entries);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.createCategory = async (req, res) => {
+  try {
+    // get all categories
+    const { name } = req.body;
+
+    
+
+    const category = await models.BlogCategory.create({
+      name
+    })
+
+    return res.status(200).json(category);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.updateCategory = async (req, res) => {
+  try {
+
+    const id = req.params.id || null;
+    
+    // get all categories
+    const { name } = req.body;
+
+    const category = await models.BlogCategory.findByPk(id)
+
+    if(!category) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    category.name = name;
+    await category.save()
+
+    return res.status(200).json(category);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.deleteCategory = async (req, res) => {
+  try {
+
+    const id = req.params.id || null;
+
+    // get all categories
+    const { categoryId } = req.body;
+
+    const category = await models.BlogCategory.findByPk(id)
+
+    if(!category) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    const categoryToMigrate = await models.BlogCategory.findByPk(categoryId)
+
+    if(!categoryToMigrate) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    await models.BlogEntry.update({
+      categoryId: categoryToMigrate.id
+    }, {
+      where: {
+        categoryId: category.id
+      }
+    })
+
+    await category.destroy();
+
+    return res.status(200).send()
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.fetchSections = async (req, res) => {
+  try {
+    // get from query params page and limit (if not provided, default to 1 and 10)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    // calculateOffset
+    const offset = (page - 1) * limit;
+
+    const whereQuery = {};
+
+    const query = {
+      limit: limit,
+      offset: offset,
+      where: whereQuery,
+      attributes: ['id', 'name'],
+      order: [['createdAt', 'ASC']],
+    }
+
+    const entries = await models.BlogSection.findAndCountAll(query)
+
+    return res.status(200).json(entries);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
   }
 }
