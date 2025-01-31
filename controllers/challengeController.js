@@ -1,57 +1,96 @@
 const models = require("../models");
 const msg = require("../utils/messages");
+const UtilsHelper = require('../helpers/utilsHelper');
+const ChallengeHelper = require('../helpers/challengeHelper');
 
 exports.fetch = async (req, res) => {
  try {
     // get from query params page and limit (if not provided, default to 1 and 10)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const subdivisionId = req.query.subdivision || null;
-    const dimensionId = req.query.dimension || null;
+    const queryName = req.query.q || null;
+    const dimension = req.query.dimension || null;
+    const isAdmin = UtilsHelper.isAdmin(req.user);
     
+    let includeUnpublished = req.query.includeUnpublished || false;
+
+    if(includeUnpublished && !isAdmin) {
+      includeUnpublished = false;
+    }
+
     // calculateOffset
     const offset = (page - 1) * limit;
 
-    const whereQuery = {};
-
-    if(dimensionId) {
-      whereQuery.dimensionId = dimensionId;
+    // dimension can be a single string or an array of strings
+    // validate that:
+    // - if it's a string, it's a number
+    // - if it's an array, all elements are numbers and the max amount is 2
+    if(dimension) {
+      if(Array.isArray(dimension)) {
+        if(dimension.length > 1) {
+          return res.status(400).json({ message: 'No se pueden filtrar por más de dos dimensiones' });
+        }
+        for(let i = 0; i < dimension.length; i++) {
+          if(isNaN(parseInt(dimension[i]))) {
+            return res.status(400).json({ message: 'Las dimensiones deben ser números' });
+          }
+        }
+      }
+      else {
+        if(isNaN(parseInt(dimension))) {
+          return res.status(400).json({ message: 'Las dimensiones deben ser números' });
+        }
+      }
     }
-    if(subdivisionId) {
-      whereQuery.subdivisionId = subdivisionId;
+
+    // if it is an array of 2 dimensions, we'll use the getChallengeIdsByTwoDimension
+    // if it is a single dimension, we'll use the getChallengeIdsByOneDimension
+    // if it is not provided, we'll use the getIdsWithoutFilteringByDimensions
+
+    let result = null;
+    // check if we need to filter by dimensions
+    if(dimension) {
+      // if it's an array of 2 dimensions, we'll use the getChallengeIdsByTwoDimensions
+      result = await ChallengeHelper.getChallengeIdsByOneDimension(dimension, queryName);
+    } else {
+      result = await ChallengeHelper.getIdsWithoutFilteringByDimensions(queryName);
     }
 
-    const query = {
+    // get the ids from the result
+    const challengeIds = result.map(row => row.id);
+
+    // get the challenges
+    const challengesResult = await models.Challenge.findAndCountAll({
       limit: limit,
       offset: offset,
-      where: whereQuery,
+      where: {
+        id: challengeIds,
+      },
       order: [['createdAt', 'DESC']],
+      distinct: true,
       include: [
-        {
-          model: models.Dimension,
-          as: 'dimension',
-          attributes: ['id','name'],
-        },
         {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['id','name'],
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
           include: [
             {
               model: models.City,
               as: 'city',
-              attributes: ['id','name'],
-            },
+              attributes: ['id','name', 'latitude', 'longitude'],
+            }
           ]
         },
-      ],
-      order: [['createdAt', 'DESC']],
-    }
-
-    const entries = await models.Challenge.findAndCountAll(query)
+        {
+          model: models.Dimension,
+          as: 'dimension',
+          attributes: ['id', 'name'],
+        },
+      ]
+    })
 
     // return the entries
-    return res.status(200).json(entries);
+    return res.status(200).json(challengesResult);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });
