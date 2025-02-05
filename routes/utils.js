@@ -13,6 +13,7 @@ const router = express.Router();
 // -----------------------------------------------
 // BASE     /utils
 // -----------------------------------------------
+// GET 	/utils/cities
 // GET 	/utils/subdivisions
 // GET 	/utils/dimensions
 // GET 	/utils/blog-categories
@@ -21,6 +22,10 @@ const router = express.Router();
 // GET 	/utils/configs
 // -----------------------------------------------
 
+
+router.get('/cities',
+	UtilsController.getCities
+);
 
 router.get('/subdivisions', 
 	UtilsController.getSubdivisions
@@ -46,9 +51,5 @@ router.put('/configs',
 	validate,
 	UtilsController.setConfigs
 );
-
-router.get('/cities',
-	UtilsController.getCities
-)
 
 module.exports = router;
