@@ -3,6 +3,7 @@ const dayjs = require('dayjs');
 const msg = require('../utils/messages');
 const UtilsHelper = require('../helpers/utilsHelper');
 const InitiativeHelper = require('../helpers/initiativeHelper');
+const RecaptchaHelper = require('../helpers/recaptchaHelper');
 const { Op } = require('sequelize');
 
 exports.fetch = async (req, res) => {
@@ -130,14 +131,10 @@ exports.fetch = async (req, res) => {
 exports.fetchOne = async (req, res) => {
   try {
     const initiativeId = req.params.id;
+    const isAdmin = UtilsHelper.isAdmin(req.user);
 
     const initiative = await models.Initiative.findByPk(initiativeId, {
       include: [
-        {
-          model: models.User,
-          as: 'author',
-          attributes: ['firstName', 'lastName'],
-        },
         {
           model: models.Subdivision,
           as: 'subdivision',
@@ -153,7 +150,7 @@ exports.fetchOne = async (req, res) => {
         {
           model: models.InitiativeContact,
           as: 'contact',
-          attributes: ['fullname'],
+          attributes: ['fullname', 'email', 'phone', 'keepEmailPrivate', 'keepPhonePrivate', 'publicData'],
         },
         {
           model: models.Dimension,
@@ -164,8 +161,19 @@ exports.fetchOne = async (req, res) => {
       ]
     })
 
+    const jsonOutput = JSON.parse(JSON.stringify(initiative))
+
+    // CHANGES TO THE INITIATIVE OBJECT IF YOU'RE NOT AN ADMIN GO HERE
+    // ----
+    if(!isAdmin) {
+      // No need to show the contact object, only the publicData object.
+      for(let i = 0; i < jsonOutput.rows.length; i++) {
+        jsonOutput.rows[i].contact = { publicData: jsonOutput.rows[i].contact.publicData }
+      }
+    }
+
     // return the initiative
-    return res.status(200).json(initiative);
+    return res.status(200).json(jsonOutput);
 
   } catch (error) {
     console.error(error);
@@ -183,6 +191,9 @@ exports.fetchAllGeolocalized = async (req, res) => {
         longitude: {
           [Op.not]: null,
         },
+        publishedAt: {
+          [Op.not]: null,
+        }
       },
       include: [
         {
@@ -231,8 +242,21 @@ exports.create = async (req, res) => {
       description, 
       needsAndOffers, 
       dimensionIds,
-      subdivisionId
+      subdivisionId,
+      latitude,
+      longitude,
+      recaptchaResponse
     } = req.body;
+
+    // if the user is an admin, we don't need to validate the recaptcha
+    if(RecaptchaHelper.requiresRecaptcha(req.user)) {
+      // validate the recaptcha
+      const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
+      console.log('recaptchaValidation', recaptchaValidation);
+      if(!recaptchaValidation) {
+        return res.status(400).json({ message: 'Error en la validación del recaptcha' });
+      }
+    }
 
     // get the dimensions
     const dimensions = await models.Dimension.findAll({
@@ -269,7 +293,10 @@ exports.create = async (req, res) => {
         needsAndOffers,
         contactId: newContact.id,
         subdivisionId: subdivisionId,
+        latitude,
+        longitude,
         authorId: null,
+        publishedAt: new Date(),
       }
 
       const newInitiative = await models.Initiative.create(initiative, { transaction: t });
@@ -296,14 +323,10 @@ exports.create = async (req, res) => {
 exports.getById = async (req, res) => {
   try {
     const initiativeId = req.params.id;
+    const isAdmin = UtilsHelper.isAdmin(req.user);
 
     const initiative = await models.Initiative.findByPk(initiativeId, {
       include: [
-        {
-          model: models.User,
-          as: 'author',
-          attributes: ['firstName', 'lastName'],
-        },
         {
           model: models.Subdivision,
           as: 'subdivision',
@@ -319,7 +342,7 @@ exports.getById = async (req, res) => {
         {
           model: models.InitiativeContact,
           as: 'contact',
-          attributes: ['fullname'],
+          attributes: ['fullname', 'email', 'phone', 'keepEmailPrivate', 'keepPhonePrivate'],
         },
         {
           model: models.Dimension,
@@ -330,8 +353,19 @@ exports.getById = async (req, res) => {
       ]
     })
 
+    const jsonOutput = JSON.parse(JSON.stringify(initiativesResult))
+
+    // CHANGES TO THE INITIATIVE OBJECT IF YOU'RE NOT AN ADMIN GO HERE
+    // ----
+    if(!isAdmin) {
+      // No need to show the contact object, only the publicData object.
+      for(let i = 0; i < jsonOutput.rows.length; i++) {
+        jsonOutput.rows[i].contact = { publicData: jsonOutput.rows[i].contact.publicData }
+      }
+    }
+
     // return the initiative
-    return res.status(200).json(initiative);
+    return res.status(200).json(jsonOutput);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al obtener la iniciativa' });
@@ -341,6 +375,83 @@ exports.getById = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const initiativeId = req.params.id;
+    
+    
+    const t = await models.sequelize.transaction();
+    
+    try {
+      const initiative = await models.Initiative.findByPk(initiativeId,{
+        include: [
+          {
+            model: models.Dimension,
+            as: 'dimensions',
+            attributes: ['id', 'name'],
+            through: { attributes: [] },
+          }
+        ],
+        transaction: t,
+      });
+      
+      if(!initiative) {
+        throw new Error('Iniciativa no encontrada');
+      }
+      
+      const initiativeContact = await models.InitiativeContact.findByPk(initiative.contactId);
+      
+      if(!initiativeContact) {
+        // return res.status(404).json({ message: 'Contacto de la iniciativa no encontrado' });
+        throw new Error('Contacto de la iniciativa no encontrado');
+      }
+
+      // update the contact
+      const contact = {
+        fullname: req.body.contact.fullname,
+        email: req.body.contact.email,
+        keepEmailPrivate: req.body.contact.keepEmailPrivate,
+        phone: req.body.contact.phone,
+        keepPhonePrivate: req.body.contact.keepPhonePrivate,
+      }
+      initiativeContact.fullname = contact.fullname;
+      initiativeContact.email = contact.email;
+      initiativeContact.keepEmailPrivate = contact.keepEmailPrivate;
+      initiativeContact.phone = contact.phone;
+      initiativeContact.keepPhonePrivate = contact.keepPhonePrivate;
+
+      await initiativeContact.save({ transaction: t });
+
+      // update the initiative
+      initiative.name = req.body.name;
+      initiative.description = req.body.description;
+      initiative.needsAndOffers = req.body.needsAndOffers;
+      initiative.subdivisionId = req.body.subdivisionId;
+      initiative.latitude = req.body.latitude || null;
+      initiative.longitude = req.body.longitude || null;
+
+      await initiative.save({ transaction: t });
+
+      // update the dimensions
+
+      await initiative.removeDimensions(initiative.dimensions.map(d => d.id), { transaction: t });
+
+      const dimensions = await models.Dimension.findAll({
+        where: {
+          id: req.body.dimensionIds,
+        }
+      }, {
+        transaction: t,
+      });
+
+      await initiative.addDimensions(dimensions, { transaction: t });
+
+      await t.commit();
+
+    } catch(error){
+      console.error(error);
+      await t.rollback();
+      return res.status(500).json({ message: 'Error al actualizar la iniciativa' });
+    }
+
+    return res.status(200).json({ message: 'Iniciativa actualizada' });
 
   } catch (error) {
     console.error(error);
