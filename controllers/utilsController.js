@@ -44,12 +44,10 @@ exports.getSubdivisions = async (req, res) => {
   try {
     // get all subdivisions
     const subdivisions = await models.Subdivision.findAll({
-      attributes: ['id', 'name', 'type'],
       include: [
         {
           model: models.City,
           as: 'city',
-          attributes: ['id', 'name'],
         }
       ]
     });
@@ -65,12 +63,10 @@ exports.getCities = async (req, res) => {
   try {
     // get all cities
     const cities = await models.City.findAll({
-      attributes: ['id', 'name'],
       include: [
         {
           model: models.Subdivision,
           as: 'subdivisions',
-          attributes: ['id', 'name'],
         }
       ]
     });
