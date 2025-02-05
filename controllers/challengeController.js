@@ -2,6 +2,8 @@ const models = require("../models");
 const msg = require("../utils/messages");
 const UtilsHelper = require('../helpers/utilsHelper');
 const ChallengeHelper = require('../helpers/challengeHelper');
+const RecaptchaHelper = require('../helpers/recaptchaHelper');
+const { Op } = require('sequelize');
 
 exports.fetch = async (req, res) => {
  try {
@@ -139,6 +141,46 @@ exports.fetchOne = async (req, res) => {
   } 
 };
 
+exports.fetchAllGeolocalized = async (req, res) => {
+  try {
+    const challenges = await models.Challenge.findAll({
+      where: {
+        latitude: {
+          [Op.not]: null,
+        },
+        longitude: {
+          [Op.not]: null,
+        },
+      },
+      include: [
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name', 'latitude', 'longitude'],
+            }
+          ]
+        },
+        {
+          model: models.Dimension,
+          as: 'dimension',
+          attributes: ['id', 'name'],
+        },
+      ]
+    })
+
+    return res.status(200).json(challenges);
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener los desafios' });
+  }
+}
+
 exports.update = async (req, res) => {
   try {
     const challengeId = req.params.id || null;
@@ -158,6 +200,8 @@ exports.update = async (req, res) => {
       subdivisionId,
       needsAndChallenges,
       proposal,
+      latitude,
+      longitude,
       inWords,
     } = req.body;
 
@@ -165,6 +209,8 @@ exports.update = async (req, res) => {
     challenge.subdivisionId = subdivisionId;
     challenge.needsAndChallenges = needsAndChallenges;
     challenge.proposal = proposal;
+    challenge.latitude = latitude || null;
+    challenge.longitude = longitude || null;
     challenge.inWords = inWords;
 
     await challenge.save();
@@ -183,20 +229,36 @@ exports.create = async (req, res) => {
       dimensionId,
       subdivisionId,
       needsAndChallenges,
+      latitude,
+      longitude,
+      recaptchaResponse,
       proposal,
       inWords,
     } = req.body;
 
+    console.log(req.user)
+
+  // validate the recaptcha
+    if(RecaptchaHelper.requiresRecaptcha(req.user)) {
+      const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
+      console.log('recaptchaValidation', recaptchaValidation);
+      if(!recaptchaValidation) {
+        return res.status(400).json({ message: 'Error en la validación del recaptcha' });
+      }
+    }
+
     // create a new Challenge entry
-    const blogEntry = await models.Challenge.create({
+    const challenge = await models.Challenge.create({
       dimensionId,
       subdivisionId,
       needsAndChallenges,
+      latitude,
+      longitude,
       proposal,
       inWords,
     });
 
-    return res.status(201).json(blogEntry);
+    return res.status(201).json(challenge);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });

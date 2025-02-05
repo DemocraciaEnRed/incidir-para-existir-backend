@@ -36,12 +36,19 @@ router.post('/',
 	[
 		check('dimensionId').isInt().withMessage(msg.validationError.integer),
 		check('subdivisionId').isInt().withMessage(msg.validationError.integer),
+		check('latitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
+		check('longitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
+		check('recaptchaResponse').isString().withMessage(msg.validationError.string),
 		check('needsAndChallenges').isString().withMessage(msg.validationError.string),
 		check('proposal').isString().withMessage(msg.validationError.string),
 		check('inWords').isString().withMessage(msg.validationError.string),
 	], 
 	validate,
 	ChallengeController.create
+);
+
+router.get('/list/geolocalized',
+	ChallengeController.fetchAllGeolocalized
 );
 
 router.get('/:id',
@@ -58,6 +65,8 @@ router.put('/:id',
 		param('id').isInt().withMessage(msg.validationError.integer),
 		body('dimensionId').isInt().withMessage(msg.validationError.integer),
 		body('subdivisionId').isInt().withMessage(msg.validationError.integer),
+		check('latitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
+		check('longitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
 		body('needsAndChallenges').isString().withMessage(msg.validationError.string),
 		body('proposal').isString().withMessage(msg.validationError.string),
 		body('inWords').isString().withMessage(msg.validationError.string),
