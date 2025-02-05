@@ -33,6 +33,38 @@ module.exports = (sequelize, DataTypes) => {
         return parseFloat(this.getDataValue('longitude'));
       },
     },
+    southWestLatitude: {
+      type: DataTypes.DECIMAL(10, 8),
+      allowNull: true,
+      // get transform to decimal
+      get() {
+        return parseFloat(this.getDataValue('southWestLatitude'));
+      },
+    },
+    southWestLongitude: {
+      type: DataTypes.DECIMAL(11, 8),
+      allowNull: true,
+      // get transform to decimal
+      get() {
+        return parseFloat(this.getDataValue('southWestLongitude'));
+      },
+    },
+    northEastLatitude: {
+      type: DataTypes.DECIMAL(10, 8),
+      allowNull: true,
+      // get transform to decimal
+      get() {
+        return parseFloat(this.getDataValue('northEastLatitude'));
+      },
+    },
+    northEastLongitude: {
+      type: DataTypes.DECIMAL(11, 8),
+      allowNull: true,
+      // get transform to decimal
+      get() {
+        return parseFloat(this.getDataValue('northEastLongitude'));
+      },
+    },
   }, {
     sequelize,
     timestamps: true,
