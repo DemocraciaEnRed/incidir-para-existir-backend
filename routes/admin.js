@@ -4,7 +4,7 @@ const { check } = require('express-validator');
 const validate = require('../middlewares/validate');
 const authorize = require('../middlewares/authorize');
 const requiresAnon = require('../middlewares/requiresAnon');
-const adminController = require('../controllers/adminController');
+const AdminController = require('../controllers/adminController');
 const msg = require('../utils/messages');
 const constants = require('../services/constants');
 
@@ -20,8 +20,19 @@ const router = express.Router();
 
 router.get('/stats',
   authorize(constants.ROLES.ADMINISTRATOR),
-  adminController.getStats
+  AdminController.getStats
 )
+
+router.get('/initiatives/csv',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  AdminController.getInitiativesCsv
+)
+
+router.get('/challenges/csv',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  AdminController.getChallengesCsv
+)
+
 // -----------------------------------------------
 
 module.exports = router;
