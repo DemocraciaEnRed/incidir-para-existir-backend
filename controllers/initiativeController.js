@@ -169,9 +169,7 @@ exports.fetchOne = async (req, res) => {
     // ----
     if(!isAdmin) {
       // No need to show the contact object, only the publicData object.
-      for(let i = 0; i < jsonOutput.rows.length; i++) {
-        jsonOutput.rows[i].contact = { publicData: jsonOutput.rows[i].contact.publicData }
-      }
+      jsonOutput.contact = { publicData: jsonOutput.contact.publicData }
     }
 
     // return the initiative
