@@ -13,6 +13,8 @@ exports.fetch = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const queryName = req.query.q || null;
     let dimension = req.query.dimension || null;
+    const city = req.query.city || null;
+    const subdivision = req.query.subdivision || null;
     let includeUnpublished = req.query.includeUnpublished || false;
     const isAdmin = UtilsHelper.isAdmin(req.user);
 
@@ -54,13 +56,13 @@ exports.fetch = async (req, res) => {
     if(dimension) {
       // if it's an array of 2 dimensions, we'll use the getInitiativeIdsByTwoDimensions
       if(Array.isArray(dimension) && dimension.length === 2) {
-        result = await InitiativeHelper.getIdsByTwoDimensions(dimension[0], dimension[1], queryName, includeUnpublished);
+        result = await InitiativeHelper.getIdsByTwoDimensions(dimension[0], dimension[1], queryName, includeUnpublished, city, subdivision);
       }
       else {
-        result = await InitiativeHelper.getInitiativeIdsByOneDimension(dimension, queryName, includeUnpublished);
+        result = await InitiativeHelper.getInitiativeIdsByOneDimension(dimension, queryName, includeUnpublished, city, subdivision);
       }
     } else {
-      result = await InitiativeHelper.getIdsWithoutFilteringByDimensions(queryName, includeUnpublished);
+      result = await InitiativeHelper.getIdsWithoutFilteringByDimensions(queryName, includeUnpublished, city, subdivision);
     }
 
     // get the ids from the result

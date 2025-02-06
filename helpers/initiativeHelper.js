@@ -4,7 +4,7 @@ const { Op, QueryTypes } = require('sequelize');
 const dimension = require('../models/dimension');
 
 
-exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = null, includeUnpublished = false) => {
+exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = null, includeUnpublished = false, cityId = null, subdivisionId = null) => {
   try {
     console.log(dimensionId)
     console.log(initiativeName)
@@ -12,6 +12,8 @@ exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = nu
     let sqlQuery = `
       SELECT i.id
       FROM Initiatives as i
+      LEFT JOIN Subdivisions s on i.subdivisionId = s.id
+      LEFT JOIN Cities c on s.cityId = c.id
       JOIN InitiativeDimensions IniDim ON i.id = IniDim.initiativeId
       WHERE IniDim.dimensionId = :dimensionId AND :otherConditions
       `;
@@ -22,6 +24,14 @@ exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = nu
 
     if(initiativeName) {
       otherConditionsArr.push(`i.name LIKE '%${initiativeName}%'`)
+    }
+
+    if(subdivisionId) {
+      otherConditionsArr.push(`i.subdivisionId = ${subdivisionId}`)
+    } else {
+      if(cityId) {
+        otherConditionsArr.push(`c.id = ${cityId}`)
+      }
     }
 
     if(!includeUnpublished) {
@@ -49,11 +59,13 @@ exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = nu
   }
 }
 
-exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeName = null, includeUnpublished = false) => {
+exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeName = null, includeUnpublished = false, cityId = null, subdivisionId = null) => {
   try {
     let sqlQuery = `
       SELECT i.id
       FROM Initiatives i
+      LEFT JOIN Subdivisions s on i.subdivisionId = s.id
+      LEFT JOIN Cities c on s.cityId = c.id
       JOIN InitiativeDimensions IniDim1 ON i.id = IniDim1.initiativeId
       JOIN InitiativeDimensions IniDim2 ON i.id = IniDim2.initiativeId
       WHERE IniDim1.dimensionId = :dimensionId1
@@ -73,6 +85,14 @@ exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeNam
   
     if(initiativeName) {
       otherConditionsArr.push(`i.name LIKE '%${initiativeName}%'`)
+    }
+
+    if(subdivisionId) {
+      otherConditionsArr.push(`i.subdivisionId = ${subdivisionId}`)
+    } else {
+      if(cityId) {
+        otherConditionsArr.push(`c.id = ${cityId}`)
+      }
     }
   
     if(!includeUnpublished) {
@@ -97,12 +117,14 @@ exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeNam
   }
 }
 
-exports.getIdsWithoutFilteringByDimensions = async (initiativeName = null, includeUnpublished = false) => {
+exports.getIdsWithoutFilteringByDimensions = async (initiativeName = null, includeUnpublished = false, cityId = null, subdivisionId = null) => {
   
   try {
     let sqlQuery = `
       SELECT i.id
       FROM Initiatives as i
+      LEFT JOIN Subdivisions s on i.subdivisionId = s.id
+      LEFT JOIN Cities c on s.cityId = c.id
       WHERE :otherConditions
     `;  
 
@@ -111,6 +133,14 @@ exports.getIdsWithoutFilteringByDimensions = async (initiativeName = null, inclu
 
     if(initiativeName) {
       otherConditionsArr.push(`i.name LIKE '%${initiativeName}%'`)
+    }
+
+    if(subdivisionId) {
+      otherConditionsArr.push(`i.subdivisionId = ${subdivisionId}`)
+    } else {
+      if(cityId) {
+        otherConditionsArr.push(`c.id = ${cityId}`)
+      }
     }
 
     if(!includeUnpublished) {
