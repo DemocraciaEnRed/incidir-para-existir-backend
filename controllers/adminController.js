@@ -264,14 +264,6 @@ exports.getChallengesCsv = async (req, res) => {
         label: 'enPalabras',
         value: 'inWords',
       },
-      {
-        label: 'fechaInicio',
-        value: (row) => row.startDate ? dayjs(row.startDate).toISOString() : null
-      },
-      {
-        label: 'fechaFin',
-        value: (row) => row.endDate ? dayjs(row.endDate).toISOString() : null
-      },
     ]
 
     const opts = { fields, defaultValue: 'NULL' };
