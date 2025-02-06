@@ -4,11 +4,13 @@ const { Op, QueryTypes } = require('sequelize');
 const dimension = require('../models/dimension');
 
 
-exports.getChallengeIdsByOneDimension = async (dimensionId, challengeName = null, includeUnpublished = false) => {
+exports.getChallengeIdsByOneDimension = async (dimensionId, challengeName = null, cityId = null, subdivisionId = null) => {
   try {
     let sqlQuery = `
       SELECT c.id
       FROM Challenges as c
+      LEFT JOIN Subdivisions as s on c.subdivisionId = s.id
+      LEFT JOIN Cities as ci on s.cityId = ci.id
       WHERE c.dimensionId = :dimensionId AND :otherConditions
       `;
 
@@ -17,7 +19,15 @@ exports.getChallengeIdsByOneDimension = async (dimensionId, challengeName = null
     let otherConditions = `TRUE`
 
     if(challengeName) {
-      otherConditionsArr.push(`c.name LIKE '%${challengeName}%'`)
+      otherConditionsArr.push(`c.inWords LIKE '%${challengeName}%'`)
+    }
+
+    if(subdivisionId) {
+      otherConditionsArr.push(`c.subdivisionId = ${subdivisionId}`)
+    } else {
+      if(cityId) {
+        otherConditionsArr.push(`ci.id = ${cityId}`)
+      }
     }
 
     if(otherConditionsArr.length > 0) {
@@ -41,12 +51,14 @@ exports.getChallengeIdsByOneDimension = async (dimensionId, challengeName = null
   }
 }
 
-exports.getIdsWithoutFilteringByDimensions = async (challengeName = null) => {
+exports.getIdsWithoutFilteringByDimensions = async (challengeName = null, cityId = null, subdivisionId = null) => {
   
   try {
     let sqlQuery = `
       SELECT c.id
       FROM Challenges as c
+      LEFT JOIN Subdivisions as s on c.subdivisionId = s.id
+      LEFT JOIN Cities as ci on s.cityId = ci.id
       WHERE :otherConditions
     `;  
 
@@ -54,7 +66,15 @@ exports.getIdsWithoutFilteringByDimensions = async (challengeName = null) => {
     let otherConditions = `TRUE`
 
     if(challengeName) {
-      otherConditionsArr.push(`c.name LIKE '%${challengeName}%'`)
+      otherConditionsArr.push(`c.inWords LIKE '%${challengeName}%'`)
+    }
+
+    if(subdivisionId) {
+      otherConditionsArr.push(`c.subdivisionId = ${subdivisionId}`)
+    } else {
+      if(cityId) {
+        otherConditionsArr.push(`ci.id = ${cityId}`)
+      }
     }
 
     if(otherConditionsArr.length > 0) {

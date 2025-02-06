@@ -23,10 +23,11 @@ const router = express.Router();
 
 router.get('/',
 	[
-		 query('page').optional().isInt().withMessage(msg.validationError.integer),
-			query('limit').optional().isInt().withMessage(msg.validationError.integer),
-			query('dimension.*').optional().isInt().withMessage(msg.validationError.integer),
-		query('subdivision.*').optional().isInt().withMessage(msg.validationError.string),
+		query('page').optional().isInt().withMessage(msg.validationError.integer),
+		query('limit').optional().isInt().withMessage(msg.validationError.integer),
+		query('dimension.*').optional().isInt().withMessage(msg.validationError.integer),
+		query('city').optional().isInt().withMessage(msg.validationError.integer),
+		query('subdivision').optional().isInt().withMessage(msg.validationError.string),
 	], 
 	validate,
 	ChallengeController.fetch

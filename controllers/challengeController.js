@@ -12,6 +12,8 @@ exports.fetch = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const queryName = req.query.q || null;
     const dimension = req.query.dimension || null;
+    const city = req.query.city || null;
+    const subdivision = req.query.subdivision || null;
     const isAdmin = UtilsHelper.isAdmin(req.user);
     
     let includeUnpublished = req.query.includeUnpublished || false;
@@ -53,9 +55,9 @@ exports.fetch = async (req, res) => {
     // check if we need to filter by dimensions
     if(dimension) {
       // if it's an array of 2 dimensions, we'll use the getChallengeIdsByTwoDimensions
-      result = await ChallengeHelper.getChallengeIdsByOneDimension(dimension, queryName);
+      result = await ChallengeHelper.getChallengeIdsByOneDimension(dimension, queryName, city, subdivision);
     } else {
-      result = await ChallengeHelper.getIdsWithoutFilteringByDimensions(queryName);
+      result = await ChallengeHelper.getIdsWithoutFilteringByDimensions(queryName, city, subdivision);
     }
 
     // get the ids from the result
@@ -379,6 +381,7 @@ exports.statsChartCountBySubdivision = async (req, res) => {
       attributes: [
         [models.sequelize.col("subdivision.id"), "subdivisionId"],
         [models.sequelize.col("subdivision.name"), "subdivisionName"],
+        [models.sequelize.col("subdivision.type"), "subdivisionType"],
         [models.sequelize.col("subdivision.city.id"), "cityId"],
         [models.sequelize.col("subdivision.city.name"), "cityName"],
         [models.sequelize.fn("COUNT", "subdivisionId"), "count"],
