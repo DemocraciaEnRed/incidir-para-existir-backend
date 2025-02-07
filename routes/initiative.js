@@ -54,6 +54,14 @@ router.post('/',
   InitiativeController.create
 );
 
+router.post('/csv',
+  [
+    check('recaptchaResponse').isString().withMessage(msg.validationError.string),
+  ],
+  validate,
+  InitiativeController.downloadInitiativesCsv
+);
+
 router.get('/list/geolocalized',
   InitiativeController.fetchAllGeolocalized
 );
@@ -117,6 +125,20 @@ router.put('/:id/unpublish',
   InitiativeController.unpublish
 );
 
+router.get('/stats/chart/count-by-subdivision/:cityId?',
+  [
+    param('cityId').optional().isInt().withMessage(msg.validationError.integer),
+  ],
+  InitiativeController.statsChartCountBySubdivision
+);
+
+router.get('/stats/chart/count-by-dimension', 
+  InitiativeController.statsChartCountByDimension
+);
+
+router.get('/stats/bar/count-by-dimension', 
+  InitiativeController.statsCountByDimensionBar
+);
 
 // router.get('/stats', 
 //   InitiativeController.stats

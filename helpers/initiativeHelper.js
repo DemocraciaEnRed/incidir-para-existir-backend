@@ -163,3 +163,81 @@ exports.getIdsWithoutFilteringByDimensions = async (initiativeName = null, inclu
     throw error
   }
 }
+
+exports.getInitiativesCountByCityAndDimension = async () => {
+  try {
+    let sqlQuery = `
+      SELECT c2.id, id.dimensionId, COUNT(i.id) as 'count'
+      FROM Initiatives i 
+      LEFT JOIN InitiativeDimensions id ON i.id = id.initiativeId
+      LEFT JOIN Subdivisions AS s ON i.subdivisionId = s.id
+      LEFT JOIN Cities AS c2 ON s.cityId = c2.id
+      WHERE i.publishedAt IS NOT NULL
+      GROUP BY c2.id, id.dimensionId
+      ORDER BY c2.id ASC, id.dimensionId ASC
+    `;
+    const results = await models.sequelize.query(sqlQuery, {
+      type: QueryTypes.SELECT,
+    });
+
+    return results
+  } catch (error) {
+    throw error
+  }
+}
+
+exports.getInitiativesStatsByDimensionBar = async () => {
+  try {
+    let sqlQuery = `
+      SELECT
+        d.id,
+        c2.id as 'cityId',
+        c2.name as 'cityName',
+        d.name as 'dimensionName',
+        COUNT(id.dimensionId) as 'value',
+        (COUNT(id.dimensionId) * 100.0 / SUM(COUNT(id.dimensionId)) OVER (PARTITION BY c2.id)) AS 'percentage'
+      FROM Initiatives AS i
+      LEFT JOIN InitiativeDimensions AS id ON i.id = id.initiativeId
+      LEFT JOIN Dimensions AS d ON id.dimensionId = d.id
+      LEFT JOIN Subdivisions AS s ON i.subdivisionId = s.id
+      LEFT JOIN Cities AS c2 ON s.cityId = c2.id
+      WHERE i.publishedAt IS NOT NULL
+      GROUP BY
+        d.id,
+        c2.id
+      ORDER BY
+        c2.id ASC,
+        d.id ASC
+      `;
+    const results = await models.sequelize.query(sqlQuery, {
+      replacements: { 
+      },
+      type: QueryTypes.SELECT,
+    }); 
+
+    return results
+  } catch (error) {
+    throw error
+  }
+}
+
+exports.getInitiativesCountBySubdivision = async (cityId = null) => {
+  try {
+    let sqlQuery = `
+      SELECT s.id AS "subdivisionId", s.name AS "subdivisionName", s.type as "subdivisionType", c.id AS "cityId", c.name AS "cityName", COUNT(CASE WHEN i.publishedAt IS NOT NULL THEN i.id END) AS "count"
+      FROM Subdivisions s 
+      LEFT JOIN Initiatives i ON i.subdivisionId = s.id 
+      LEFT JOIN Cities c ON s.cityId = c.id
+      WHERE c.id = :cityId 
+      GROUP BY s.id
+    `;
+    const results = await models.sequelize.query(sqlQuery, {
+      replacements: { cityId },
+      type: QueryTypes.SELECT,
+    });
+
+    return results
+  } catch (error) {
+    throw error
+  }
+}

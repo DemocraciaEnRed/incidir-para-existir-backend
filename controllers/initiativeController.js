@@ -5,6 +5,8 @@ const UtilsHelper = require('../helpers/utilsHelper');
 const InitiativeHelper = require('../helpers/initiativeHelper');
 const RecaptchaHelper = require('../helpers/recaptchaHelper');
 const { Op } = require('sequelize');
+// json2csv
+const { Parser } = require('json2csv');
 
 exports.fetch = async (req, res) => {
   try {
@@ -252,7 +254,6 @@ exports.create = async (req, res) => {
     if(RecaptchaHelper.requiresRecaptcha(req.user)) {
       // validate the recaptcha
       const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
-      console.log('recaptchaValidation', recaptchaValidation);
       if(!recaptchaValidation) {
         return res.status(400).json({ message: 'Error en la validación del recaptcha' });
       }
@@ -541,3 +542,397 @@ exports.unpublish = async (req, res) => {
     res.status(500).json({ message: 'Error al despublicar la iniciativa' });
   }
 }
+
+
+exports.downloadInitiativesCsv = async (req, res) => {
+  try {
+
+    const recaptchaResponse = req.body.recaptchaResponse;
+
+    // if the user is an admin, we don't need to validate the recaptcha
+    if(RecaptchaHelper.requiresRecaptcha(req.user)) {
+      // validate the recaptcha
+      const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
+      if(!recaptchaValidation) {
+        return res.status(400).json({ message: 'Error en la validación del recaptcha' });
+      }
+    }
+
+    const initiatives = await models.Initiative.findAll({
+      where: {
+        publishedAt: {
+          [Op.not]: null,
+        }
+      },
+      include: [
+        {
+          model: models.InitiativeContact,
+          as: 'contact',
+          attributes: ['fullname', 'email', 'phone', 'keepEmailPrivate', 'keepPhonePrivate', 'publicData'],
+        },
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+          attributes: ['id', 'type', 'name'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name'],
+            }
+          ]
+        },
+        {
+          model: models.Dimension,
+          as: 'dimensions',
+          attributes: ['id', 'name'],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    const fields = [
+      {
+        label: 'iniciativaId',
+        value: 'id',
+      },
+      {
+        label: 'fuente',
+        value: 'source',
+        default: 'web'
+      },
+      {
+        label: 'fechaPublicacion',
+        value:  (row) => dayjs(row.updatedAt).toISOString(),
+      },
+      {
+        label: 'fuente',
+        value: 'source',
+      },
+      {
+        label: 'contactoNombreCompleto',
+        value: 'contact.publicData.fullname',
+      },
+      {
+        label: 'contactoEmail',
+        value: 'contact.publicData.email',
+      },
+      {
+        label: 'contactoTelefono',
+        value: 'contact.publicData.phone',
+      },
+      {
+        label: 'ciudadId',
+        value: 'subdivision.city.id',
+      },
+      {
+        label: 'ciudadNombre',
+        value: 'subdivision.city.name',
+      },
+      {
+        label: 'subdivisionId',
+        value: 'subdivision.id'
+      },
+      {
+        label: 'subdivisionNombre',
+        value: 'subdivision.name',
+      },
+      {
+        label: 'subdivisionTipo',
+        value: 'subdivision.type',
+      },
+      {
+        label: 'latitude',
+        value: (row) => row.latitude ? row.latitude.toString() : null
+      },
+      {
+        label: 'longitude',
+        value: (row) => row.longitude ? row.longitude.toString() : null
+      },
+      {
+        label: 'ejeTematico01Id',
+        value: 'dimensions[0].id', 
+      },
+      {
+        label: 'ejeTematico01Nombre',
+        value: 'dimensions[0].name', 
+      },
+      {
+        label: 'ejeTematico02Id',
+        value: 'dimensions[1].id', 
+      },
+      {
+        label: 'ejeTematico02Nombre',
+        value: 'dimensions[1].name', 
+      },
+      {
+        label: 'nombre',
+        value: 'name',
+      },
+      {
+        label: 'descripcion',
+        value: 'description',
+      },
+      {
+        label: 'necesidadesYOfertas',
+        value: 'needsAndOffers',
+      },
+    ];
+
+    const opts = { fields, defaultValue: 'NULL' };
+
+    const parser = new Parser(opts);
+    const csv = parser.parse(initiatives);
+
+    const timestamp = dayjs().format('YYYYMMDD_HHmmss');
+    const filename = `${timestamp}_iniciativas_export.csv`;
+
+    res.setHeader('Content-disposition', `attachment; filename=${filename}`);
+    res.set('Content-Type', 'text/csv');
+    res.status(200).send(csv);
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: msg.error.default })
+  }
+}
+
+
+exports.statsChartCountByDimension = async (req, res) => {
+  try {
+    // Initialize radar data structure
+    const radarData = {
+      legendData: [],
+      radarIndicator: [],
+      radar: { data: [] },
+    };
+
+    // Fetch cities and their subdivisions
+    const cities = await models.City.findAll({
+      attributes: ["id", "name"],
+      include: [
+        {
+          model: models.Subdivision,
+          as: "subdivisions",
+          attributes: ["id"],
+        },
+      ],
+    });
+
+    radarData.legendData = cities.map((city) => city.name);
+
+    // Fetch dimensions
+    const dimensions = await models.Dimension.findAll({
+      attributes: ["id", "name"],
+    });
+
+    radarData.radarIndicator = dimensions.map((dimension) => ({
+      name: dimension.name,
+    }));
+
+    // Fetch all initiatives and group counts by city and dimension
+    const initiativeCounts = await InitiativeHelper.getInitiativesCountByCityAndDimension();
+    // this will return something like this:
+    // [{
+    //   "id" : 1,
+    //   "dimensionId" : 1,
+    //   "count(i.id)" : 50
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 2,
+    //   "count(i.id)" : 38
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 3,
+    //   "count(i.id)" : 42
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 4,
+    //   "count(i.id)" : 52
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 5,
+    //   "count(i.id)" : 39
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 6,
+    //   "count(i.id)" : 43
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 7,
+    //   "count(i.id)" : 36
+    // },
+    // {
+    //   "id" : 1,
+    //   "dimensionId" : 8,
+    //   "count(i.id)" : 42
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 1,
+    //   "count(i.id)" : 18
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 2,
+    //   "count(i.id)" : 22
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 3,
+    //   "count(i.id)" : 16
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 4,
+    //   "count(i.id)" : 19
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 5,
+    //   "count(i.id)" : 27
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 6,
+    //   "count(i.id)" : 27
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 7,
+    //   "count(i.id)" : 22
+    // },
+    // {
+    //   "id" : 2,
+    //   "dimensionId" : 8,
+    //   "count(i.id)" : 25
+    // }]   
+
+    console.log(initiativeCounts)
+
+    // Populate radar data for each city
+    for (const city of cities) {
+      const cityData = {
+        name: city.name,
+        label: {
+          show: true,
+        },
+        value: dimensions.map(
+          (dimension) => initiativeCounts.find((count) => count.id === city.id && count.dimensionId === dimension.id)?.count || 0
+        ),
+      };
+      radarData.radar.data.push(cityData);
+    }
+
+    return res.status(200).json(radarData);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+};
+
+
+exports.statsCountByDimensionBar = async (req, res) => {
+  try {
+    // count how many initiatives are in each city
+    const countOfInitiativesPerCity = await models.Initiative.findAll({
+      attributes: [
+        [models.sequelize.col("subdivision.city.id"), "cityId"],
+        [models.sequelize.col("subdivision.city.name"), "cityName"],
+        [models.sequelize.fn("COUNT", "cityId"), "count"],
+      ],
+      where: {
+        publishedAt: {
+          [Op.not]: null,
+        },
+      },
+      group: ["cityId"],
+      distinct: true,
+      include: [
+        {
+          model: models.Subdivision,
+          as: "subdivision",
+          attributes: [],
+          include : [
+            {
+              model: models.City,
+              as: "city",
+              attributes: [],
+            }
+          ]
+        },
+      ],
+    });
+    
+    const barData = await InitiativeHelper.getInitiativesStatsByDimensionBar();
+
+    const barDataJson = JSON.parse(JSON.stringify(barData));
+
+    // convert percentage to float
+    for (let i = 0; i < barDataJson.length; i++) {
+      barDataJson[i].percentage = parseFloat(barDataJson[i].percentage);
+    }
+
+    return res.status(200).json({
+      countOfInitiativesPerCity,
+      barDataJson
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+};
+
+exports.statsChartCountBySubdivision = async (req, res) => {
+  try {
+    const cityId = req.params.cityId || null;
+    const countBySubdivisions = [];
+
+    // count how many Initiatives per subdivision per city
+    // initiative.subdivision.id , initiative.subdivision.name, initiative.subdivision.city.id, count
+    // const countOfInitiativesPerSubdivision = await models.Initiative.findAll({
+    //   attributes: [
+    //     [models.sequelize.col("subdivision.id"), "subdivisionId"],
+    //     [models.sequelize.col("subdivision.name"), "subdivisionName"],
+    //     [models.sequelize.col("subdivision.type"), "subdivisionType"],
+    //     [models.sequelize.col("subdivision.city.id"), "cityId"],
+    //     [models.sequelize.col("subdivision.city.name"), "cityName"],
+    //     [models.sequelize.fn("COUNT", "subdivisionId"), "count"],
+    //   ],
+    //   group: ["subdivisionId"],
+    //   where: {
+    //     publishedAt: {
+    //       [Op.not]: null,
+    //     },
+    //   },
+    //   include: [
+    //     {
+    //       model: models.Subdivision,
+    //       as: "subdivision",
+    //       where: cityId ? { cityId } : {},
+    //       attributes: [],
+    //       include: [
+    //         {
+    //           model: models.City,
+    //           as: "city",
+    //           where: cityId ? { id: cityId } : {},
+    //           attributes: [],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // });
+
+    const countOfInitiativesPerSubdivision = await InitiativeHelper.getInitiativesCountBySubdivision(cityId);
+
+    return res.status(200).json(countOfInitiativesPerSubdivision);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+};
