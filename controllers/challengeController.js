@@ -4,6 +4,9 @@ const UtilsHelper = require('../helpers/utilsHelper');
 const ChallengeHelper = require('../helpers/challengeHelper');
 const RecaptchaHelper = require('../helpers/recaptchaHelper');
 const { Op } = require('sequelize');
+const dayjs = require('dayjs');
+// json2csv
+const { Parser } = require('json2csv');
 
 exports.fetch = async (req, res) => {
  try {
@@ -356,6 +359,9 @@ exports.statsChartCountByDimension = async (req, res) => {
     for (const city of cities) {
       const cityData = {
         name: city.name,
+        label: {
+          show: true,
+        },
         value: dimensions.map(
           (dimension) => challengeCounts[city.id]?.[dimension.id] || 0
         ),
@@ -370,6 +376,28 @@ exports.statsChartCountByDimension = async (req, res) => {
   }
 };
 
+
+exports.statsCountByDimensionBar = async (req, res) => {
+  try {
+    const cityId = req.params.cityId || null;
+    // Initialize radar data structure
+    
+    const results = await ChallengeHelper.getChallengesStatsByDimensionBar();
+
+    const outputJson = JSON.parse(JSON.stringify(results));
+
+    // convert percentage to float
+    for (let i = 0; i < outputJson.length; i++) {
+      outputJson[i].percentage = parseFloat(outputJson[i].percentage);
+    }
+
+    return res.status(200).json(outputJson);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+};
+
 exports.statsChartCountBySubdivision = async (req, res) => {
   try {
     const cityId = req.params.cityId || null;
@@ -377,33 +405,35 @@ exports.statsChartCountBySubdivision = async (req, res) => {
 
     // count how many challenges per subdivision per city
     // challenge.subdivision.id , challenge.subdivision.name, challenge.subdivision.city.id, count
-    const countOfChallengesPerSubdivision = await models.Challenge.findAll({
-      attributes: [
-        [models.sequelize.col("subdivision.id"), "subdivisionId"],
-        [models.sequelize.col("subdivision.name"), "subdivisionName"],
-        [models.sequelize.col("subdivision.type"), "subdivisionType"],
-        [models.sequelize.col("subdivision.city.id"), "cityId"],
-        [models.sequelize.col("subdivision.city.name"), "cityName"],
-        [models.sequelize.fn("COUNT", "subdivisionId"), "count"],
-      ],
-      group: ["subdivisionId"],
-      include: [
-        {
-          model: models.Subdivision,
-          as: "subdivision",
-          where: cityId ? { cityId } : {},
-          attributes: [],
-          include: [
-            {
-              model: models.City,
-              as: "city",
-              where: cityId ? { id: cityId } : {},
-              attributes: [],
-            },
-          ],
-        },
-      ],
-    });
+    // const countOfChallengesPerSubdivision = await models.Challenge.findAll({
+    //   attributes: [
+    //     [models.sequelize.col("subdivision.id"), "subdivisionId"],
+    //     [models.sequelize.col("subdivision.name"), "subdivisionName"],
+    //     [models.sequelize.col("subdivision.type"), "subdivisionType"],
+    //     [models.sequelize.col("subdivision.city.id"), "cityId"],
+    //     [models.sequelize.col("subdivision.city.name"), "cityName"],
+    //     [models.sequelize.fn("COUNT", "subdivisionId"), "count"],
+    //   ],
+    //   group: ["subdivisionId"],
+    //   include: [
+    //     {
+    //       model: models.Subdivision,
+    //       as: "subdivision",
+    //       where: cityId ? { cityId } : {},
+    //       attributes: [],
+    //       include: [
+    //         {
+    //           model: models.City,
+    //           as: "city",
+    //           where: cityId ? { id: cityId } : {},
+    //           attributes: [],
+    //         },
+    //       ],
+    //     },
+    //   ],
+    // });
+
+    const countOfChallengesPerSubdivision = await ChallengeHelper.getChallengesCountBySubdivision(cityId);
 
     return res.status(200).json(countOfChallengesPerSubdivision);
   } catch (error) {
@@ -411,3 +441,120 @@ exports.statsChartCountBySubdivision = async (req, res) => {
     return res.status(500).json({ message: msg.error.default });
   }
 };
+
+exports.downloadChallengesCsv = async (req, res) => {
+  try {
+
+    const recaptchaResponse = req.body.recaptchaResponse;
+
+    // if the user is an admin, we don't need to validate the recaptcha
+    if(RecaptchaHelper.requiresRecaptcha(req.user)) {
+      // validate the recaptcha
+      const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
+      if(!recaptchaValidation) {
+        return res.status(400).json({ message: 'Error en la validación del recaptcha' });
+      }
+    }
+
+    const challenges = await models.Challenge.findAll({
+      include: [
+        {
+          model: models.Subdivision,
+          as: 'subdivision',
+          attributes: ['id', 'type', 'name'],
+          include: [
+            {
+              model: models.City,
+              as: 'city',
+              attributes: ['id','name'],
+            }
+          ]
+        },
+        {
+          model: models.Dimension,
+          as: 'dimension',
+          attributes: ['id', 'name'],
+        },
+      ],
+    });
+
+    const fields = [
+      {
+        label: 'reporteId',
+        value: 'id',
+      },
+      {
+        label: 'fuente',
+        value: 'source',
+      },
+      {
+        label: 'fechaCreacion',
+        value: (row) => dayjs(row.createdAt).toISOString(),
+      },
+      {
+        label: 'ciudadId',
+        value: 'subdivision.city.id',
+      },
+      {
+        label: 'ciudadNombre',
+        value: 'subdivision.city.name',
+      },
+      {
+        label: 'subdivisionId',
+        value: 'subdivision.id'
+      },
+      {
+        label: 'subdivisionNombre',
+        value: 'subdivision.name',
+      },
+      {
+        label: 'subdivisionTipo',
+        value: 'subdivision.type',
+      },
+      {
+        label: 'ejeTematicoId',
+        value: 'dimension.id', 
+      },
+      {
+        label: 'ejeTematicoNombre',
+        value: 'dimension.name', 
+      },
+      {
+        label: 'latitude',
+        value: (row) => row.latitude ? row.latitude.toString() : null
+      },
+      {
+        label: 'longitude',
+        value: (row) => row.longitude ? row.longitude.toString() : null
+      },
+      {
+        label: 'necesidadesYDesafios',
+        value: 'needsAndChallenges',
+      },
+      {
+        label: 'propuesta',
+        value: 'proposal'
+      },
+      {
+        label: 'enPalabras',
+        value: 'inWords',
+      },
+    ]
+
+    const opts = { fields, defaultValue: 'NULL' };
+
+    const parser = new Parser(opts);
+    
+    const csv = parser.parse(challenges);
+
+    const timestamp = dayjs().format('YYYYMMDD_HHmmss');
+    const filename = `${timestamp}_desafios_export.csv`;
+
+    res.setHeader('Content-disposition', `attachment; filename=${filename}`);
+    res.set('Content-Type', 'text/csv');
+    res.status(200).send(csv);
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: msg.error.default })
+  }
+}

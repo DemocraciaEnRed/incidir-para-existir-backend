@@ -16,6 +16,7 @@ const router = express.Router();
 // -----------------------------------------------
 // GET   	/
 // POST   /
+// PÓST 	/csv
 // GET    /:id
 // DELETE	/:id
 // GET    /stats/chart/count-by-subdivision/:cityId?
@@ -46,6 +47,14 @@ router.post('/',
 	], 
 	validate,
 	ChallengeController.create
+);
+
+router.post('/csv',
+	[
+		check('recaptchaResponse').isString().withMessage(msg.validationError.string),
+	],
+	validate,
+	ChallengeController.downloadChallengesCsv
 );
 
 router.get('/list/geolocalized',
@@ -94,6 +103,10 @@ router.get('/stats/chart/count-by-subdivision/:cityId?',
 
 router.get('/stats/chart/count-by-dimension', 
 	ChallengeController.statsChartCountByDimension
+);
+
+router.get('/stats/bar/count-by-dimension', 
+	ChallengeController.statsCountByDimensionBar
 );
 
 // -----------------------------------------------

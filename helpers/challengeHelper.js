@@ -93,3 +93,53 @@ exports.getIdsWithoutFilteringByDimensions = async (challengeName = null, cityId
     throw error
   }
 }
+
+exports.getChallengesStatsByDimensionBar = async () => {
+  try {
+    let sqlQuery = `
+      SELECT 
+        c.dimensionId, 
+        c2.id as 'cityId',
+        c2.name as 'cityName',
+        d.name as 'dimensionName',
+        COUNT(c.dimensionId) as 'value', 
+        (COUNT(c.dimensionId) * 100.0 / SUM(COUNT(c.dimensionId)) OVER (PARTITION BY c2.id)) AS 'percentage'
+      FROM Challenges AS c
+      LEFT JOIN Dimensions AS d ON c.dimensionId = d.id 
+      LEFT JOIN Subdivisions AS s ON c.subdivisionId = s.id 
+      LEFT JOIN Cities AS c2 ON s.cityId = c2.id
+      GROUP BY c.dimensionId, c2.id
+      ORDER BY c2.id ASC, c.dimensionId ASC
+      `;
+    const results = await models.sequelize.query(sqlQuery, {
+      replacements: { 
+      },
+      type: QueryTypes.SELECT,
+    }); 
+
+    return results
+  } catch (error) {
+    throw error
+  }
+}
+
+exports.getChallengesCountBySubdivision = async (cityId = null) => {
+  try {
+    let sqlQuery = `
+      SELECT s.id AS "subdivisionId", s.name AS "subdivisionName", s.type as "subdivisionType", c.id AS "cityId", c.name AS "cityName", COUNT(c2.id) AS "count"
+        FROM Subdivisions s 
+        LEFT JOIN Challenges c2 ON c2.subdivisionId = s.id 
+        LEFT JOIN Cities c ON s.cityId = c.id
+        WHERE c.id = :cityId
+        GROUP BY s.id
+    `;
+    const results = await models.sequelize.query(sqlQuery, {
+      replacements: { cityId },
+      type: QueryTypes.SELECT,
+    });
+
+    return results
+  } catch (error) {
+    throw error
+  }
+}
