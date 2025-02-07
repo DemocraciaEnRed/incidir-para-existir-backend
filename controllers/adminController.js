@@ -36,14 +36,9 @@ exports.getInitiativesCsv = async (req, res) => {
     const initiatives = await models.Initiative.findAll({
       include: [
         {
-          model: models.User,
-          as: 'author',
-          attributes: ['email'],
-        },
-        {
           model: models.InitiativeContact,
           as: 'contact',
-          attributes: ['fullname', 'email', 'phone'],
+          attributes: ['fullname', 'email', 'phone', 'keepEmailPrivate', 'keepPhonePrivate'],
         },
         {
           model: models.Subdivision,
@@ -101,8 +96,16 @@ exports.getInitiativesCsv = async (req, res) => {
         value: 'contact.email',
       },
       {
+        label: 'contactoEmailPrivado',
+        value: (row) => row.contact.keepEmailPrivate ? 'TRUE' : 'FALSE',
+      },
+      {
         label: 'contactoTelefono',
         value: 'contact.phone',
+      },
+      {
+        label: 'contactoTelefonoPrivado',
+        value: (row) => row.contact.keepPhonePrivate ? 'TRUE' : 'FALSE',
       },
       {
         label: 'ciudadId',
