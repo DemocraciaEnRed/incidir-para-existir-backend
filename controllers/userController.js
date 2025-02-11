@@ -335,3 +335,53 @@ exports.postSetup = async (req, res) => {
     return res.status(500).json({ message: "An error occurred" });
   }
 };
+
+exports.uploadAvatar = async (req, res) => {
+  try {
+    const user = req.user
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    
+    // save the image
+    user.imageUrl = file.location;
+    await user.save();
+
+    return res.status(200).json(user);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+};
+
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+
+    const userId = req.user.id
+
+    const user = await models.User.findByPk(userId);
+    
+
+    // check if the old password is correct
+		const valid = await user.comparePassword(oldPassword);
+
+		if(!valid) {
+			return res.status(401).json({ message: 'Credenciales incorrectas' });
+		}
+    
+
+    // set the new password
+    user.password = newPassword;
+    await user.save();
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "An error occurred" });
+  }
+}

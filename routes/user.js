@@ -7,6 +7,7 @@ const requiresAnon = require('../middlewares/requiresAnon');
 const UserController = require('../controllers/userController');
 const msg = require('../utils/messages');
 const constants = require('../services/constants');
+const uploader = require('../middlewares/s3');
 
 // initialize router
 const router = express.Router();
@@ -79,6 +80,23 @@ router.post('/',
   ],
   validate,
   UserController.createUser
+)
+
+
+router.post('/avatar',
+  authorize(constants.ROLES.ALL),
+  uploader.single('picture'),
+  UserController.uploadAvatar
+)
+
+router.put('/password/update',
+  authorize(constants.ROLES.ALL),
+  [
+    body('oldPassword').isString().isLength({ min: 6 }),
+    body('newPassword').isString().isLength({ min: 6 }),
+  ],
+  validate,
+  UserController.updatePassword
 )
 
 router.get('/:id',
