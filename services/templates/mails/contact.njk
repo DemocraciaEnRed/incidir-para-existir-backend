@@ -1,0 +1,16 @@
+{% extends "base.njk" %}
+
+{% import "macros.njk" as macros %}
+
+{% block preheader %}
+  {{ macros.preheader('Nuevo contacto en Incidir Para Existir: ' + fullname) }}
+{% endblock %}
+
+{% block main %}
+  {{ macros.sentence('¡Hola! 👋') }}
+  {{ macros.sentence('Han recibido un nuevo mensaje de contacto en Incidir Para Existir.') }}
+  {{ macros.sentence('A continuación, los detalles del mensaje:') }}
+  {{ macros.sentence('Nombre: ' + fullname) }}
+  {{ macros.sentence('Correo: ' + email) }}
+  {{ macros.sentence('Mensaje: ' + message) }}
+{% endblock %}

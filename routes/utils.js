@@ -18,8 +18,8 @@ const router = express.Router();
 // GET 	/utils/dimensions
 // GET 	/utils/blog-categories
 // GET 	/utils/blog-sections
-
 // GET 	/utils/configs
+// POST /utils/contact
 // -----------------------------------------------
 
 
@@ -50,6 +50,17 @@ router.put('/configs',
 	],
 	validate,
 	UtilsController.setConfigs
+);
+
+router.post('/contact', 
+	[
+		body('fullname').isString(),
+		body('email').isEmail(),
+		body('message').isString(),
+		body('recaptchaResponse').isString().withMessage(msg.validationError.string),
+	],
+	validate,
+	UtilsController.postContact
 );
 
 module.exports = router;

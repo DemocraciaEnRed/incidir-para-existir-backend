@@ -3,6 +3,8 @@ const models = require('../models');
 const dayjs = require('dayjs');
 const msg = require('../utils/messages');
 const UtilsHelper = require('../helpers/utilsHelper');
+const RecaptchaHelper = require('../helpers/recaptchaHelper');
+const mailer = require('../services/mailer');
 
 exports.getConfigs = async (req, res) => {
   try {
@@ -82,10 +84,40 @@ exports.getDimensions = async (req, res) => {
   try {
     // get all dimensions
     const dimensions = await models.Dimension.findAll({
-      attributes: ['id', 'name'],
+      attributes: ['id', 'fullname'],
     });
 
     return res.status(200).json(dimensions);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.postContact = async (req, res) => {
+  try {
+    const { fullname, email, message, recaptchaResponse } = req.body;
+
+    const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
+      if(!recaptchaValidation) {
+        return res.status(400).json({ message: 'Error en la validación del recaptcha' });
+      }   
+
+    // render the email html
+    const html = await mailer.renderEmailHtml('contact', {
+      fullname: fullname,
+      email: email,
+      message: message
+    })
+    // send the email
+    const contactEmail = process.env.CONTACT_EMAIL || null;
+    if (!contactEmail) {
+      console.error('No se ha configurado el email de contacto - Skipping email sending');
+      return res.status(500).json({ message: 'Error en el servidor' });
+    }
+    await mailer.sendNow(contactEmail, `Nuevo contacto en Incidir para Existir: ${fullname}`, html);
+    
+    return res.status(200).json({ message: 'Email enviado con éxito' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: msg.error.default });
