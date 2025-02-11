@@ -84,7 +84,7 @@ exports.getDimensions = async (req, res) => {
   try {
     // get all dimensions
     const dimensions = await models.Dimension.findAll({
-      attributes: ['id', 'fullname'],
+      attributes: ['id', 'name'],
     });
 
     return res.status(200).json(dimensions);
