@@ -13,7 +13,7 @@ module.exports = passport => {
 	passport.use(
 		new JwtStrategy(opts, (jwt_payload, done) => {
 			User.findOne({
-				attributes: ['id', 'firstName', 'lastName', 'fullName', 'role', 'subdivisionId'],
+				attributes: ['id', 'firstName', 'lastName', 'fullName', 'role', 'subdivisionId', 'imageUrl'],
 				include: {
 					model: Subdivision,
 					as: 'subdivision',
