@@ -246,7 +246,6 @@ exports.create = async (req, res) => {
   // validate the recaptcha
     if(RecaptchaHelper.requiresRecaptcha(req.user)) {
       const recaptchaValidation = await RecaptchaHelper.verifyRecaptcha(recaptchaResponse);
-      console.log('recaptchaValidation', recaptchaValidation);
       if(!recaptchaValidation) {
         return res.status(400).json({ message: 'Error en la validación del recaptcha' });
       }
