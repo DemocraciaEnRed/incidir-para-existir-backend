@@ -28,7 +28,7 @@ module.exports = {
       },
       subdivisionId: {
         type: Sequelize.DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: 'Subdivisions',
           key: 'id'

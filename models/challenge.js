@@ -33,7 +33,7 @@ module.exports = (sequelize) => {
     },
     subdivisionId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     source: {
       type: DataTypes.STRING,
