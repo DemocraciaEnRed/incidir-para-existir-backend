@@ -371,7 +371,7 @@ exports.updatePassword = async (req, res) => {
 		const valid = await user.comparePassword(oldPassword);
 
 		if(!valid) {
-			return res.status(401).json({ message: 'Credenciales incorrectas' });
+			return res.status(500).json({ message: 'Credenciales incorrectas' });
 		}
     
 
