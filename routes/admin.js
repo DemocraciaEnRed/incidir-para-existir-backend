@@ -33,6 +33,11 @@ router.get('/challenges/csv',
   AdminController.getChallengesCsv
 )
 
+router.get('/bot-responses',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  AdminController.listBotResponses
+)
+
 // -----------------------------------------------
 
 module.exports = router;
