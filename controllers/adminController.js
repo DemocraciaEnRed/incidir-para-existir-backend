@@ -286,3 +286,26 @@ exports.getChallengesCsv = async (req, res) => {
     return res.status(500).json({ message: msg.error.default })
   }
 }
+
+exports.listBotResponses = async (req, res) => {
+  try {
+    // get from query params page and limit (if not provided, default to 1 and 10)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    // calculateOffset
+    const offset = (page - 1) * limit;
+
+
+    
+    const botResponses = await models.BotResponse.findAndCountAll({
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
+
+    return res.status(200).json(botResponses);
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: msg.error.default })
+  }
+}
