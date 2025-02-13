@@ -203,6 +203,7 @@ exports.update = async (req, res) => {
     const {
       dimensionId,
       subdivisionId,
+      source,
       needsAndChallenges,
       proposal,
       latitude,
@@ -212,6 +213,7 @@ exports.update = async (req, res) => {
 
     challenge.dimensionId = dimensionId;
     challenge.subdivisionId = subdivisionId;
+    challenge.source = source;
     challenge.needsAndChallenges = needsAndChallenges;
     challenge.proposal = proposal;
     challenge.latitude = latitude || null;
@@ -233,6 +235,7 @@ exports.create = async (req, res) => {
     const {
       dimensionId,
       subdivisionId,
+      source,
       needsAndChallenges,
       latitude,
       longitude,
@@ -255,6 +258,7 @@ exports.create = async (req, res) => {
     const challenge = await models.Challenge.create({
       dimensionId,
       subdivisionId,
+      source,
       needsAndChallenges,
       latitude,
       longitude,

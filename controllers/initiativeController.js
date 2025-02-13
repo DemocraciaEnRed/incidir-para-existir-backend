@@ -241,6 +241,7 @@ exports.create = async (req, res) => {
   try {
     const { 
       name, 
+      source,
       description, 
       needsAndOffers, 
       dimensionIds,
@@ -290,6 +291,7 @@ exports.create = async (req, res) => {
       // create the initiative
       const initiative = {
         name,
+        source,
         description,
         needsAndOffers,
         contactId: newContact.id,
@@ -422,6 +424,7 @@ exports.update = async (req, res) => {
 
       // update the initiative
       initiative.name = req.body.name;
+      initiative.source = req.body.source;
       initiative.description = req.body.description;
       initiative.needsAndOffers = req.body.needsAndOffers;
       initiative.subdivisionId = req.body.subdivisionId;
@@ -892,41 +895,6 @@ exports.statsChartCountBySubdivision = async (req, res) => {
   try {
     const cityId = req.params.cityId || null;
     const countBySubdivisions = [];
-
-    // count how many Initiatives per subdivision per city
-    // initiative.subdivision.id , initiative.subdivision.name, initiative.subdivision.city.id, count
-    // const countOfInitiativesPerSubdivision = await models.Initiative.findAll({
-    //   attributes: [
-    //     [models.sequelize.col("subdivision.id"), "subdivisionId"],
-    //     [models.sequelize.col("subdivision.name"), "subdivisionName"],
-    //     [models.sequelize.col("subdivision.type"), "subdivisionType"],
-    //     [models.sequelize.col("subdivision.city.id"), "cityId"],
-    //     [models.sequelize.col("subdivision.city.name"), "cityName"],
-    //     [models.sequelize.fn("COUNT", "subdivisionId"), "count"],
-    //   ],
-    //   group: ["subdivisionId"],
-    //   where: {
-    //     publishedAt: {
-    //       [Op.not]: null,
-    //     },
-    //   },
-    //   include: [
-    //     {
-    //       model: models.Subdivision,
-    //       as: "subdivision",
-    //       where: cityId ? { cityId } : {},
-    //       attributes: [],
-    //       include: [
-    //         {
-    //           model: models.City,
-    //           as: "city",
-    //           where: cityId ? { id: cityId } : {},
-    //           attributes: [],
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // });
 
     const countOfInitiativesPerSubdivision = await InitiativeHelper.getInitiativesCountBySubdivision(cityId);
 
