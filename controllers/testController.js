@@ -204,3 +204,46 @@ exports.createBlogEntries = async (req, res) => {
     res.status(500).json({ message: msg.error.default });
   }
 }
+
+exports.createBotResponses = async (req, res) => {
+  try {
+    const botResponses = []
+    for(let i = 0; i < 50; i++) {
+      botResponses.push({
+        response: {
+          a: faker.lorem.sentence(10),
+          b: faker.lorem.sentence(10),
+          c: faker.datatype.boolean(),
+        }
+      });
+    }
+
+    await models.BotResponse.bulkCreate(botResponses);
+
+    return res.status(200).json({ message: 'Bot responses created' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.createResorces = async (req, res) => {
+  try {
+    const resources = []
+    for(let i = 0; i < 50; i++) {
+      resources.push({
+        categoryId: [1, 2, 3][Math.floor(Math.random() * 3)],
+        title: faker.lorem.words(4),
+        description: Math.random() > 0.5 ? faker.lorem.sentence(10) : null,
+        url: faker.internet.url(),
+      });
+    }
+
+    await models.ResourceEntry.bulkCreate(resources);
+
+    return res.status(200).json({ message: 'Resources created' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: msg.error.default });
+  }
+}
