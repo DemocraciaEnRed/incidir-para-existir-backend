@@ -26,10 +26,13 @@ router.get('/create-challenges', TestController.createChallenges)
 
 router.get('/create-blog-entries', TestController.createBlogEntries)
 
+router.get('/create-bot-responses', TestController.createBotResponses)
+
+router.get('/create-resources', TestController.createResorces)
+
 router.post('/file-test', 
   uploader.single('file'),
   TestController.fileTest
 )
-
 
 module.exports = router;
