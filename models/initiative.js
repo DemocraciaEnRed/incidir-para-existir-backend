@@ -84,6 +84,21 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    customCity: {
+      type: DataTypes.STRING,
+      defaultValue: null,
+      allowNull: true,
+    },
+    customSubdivision: {
+      type: DataTypes.STRING,
+      defaultValue: null,
+      allowNull: true,
+    },
+    extra: {
+      type: DataTypes.TEXT,
+      defaultValue: null,
+      allowNull: true,
+    },
     publishedAt: {
       type: DataTypes.DATE,
       allowNull: true,
