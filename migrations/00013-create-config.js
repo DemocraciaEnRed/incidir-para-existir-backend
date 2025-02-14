@@ -34,6 +34,7 @@ module.exports = {
     });
     await queryInterface.bulkInsert('Configs', [
       { key: 'tos', type: 'string', value: 'Próximamente' },
+      { key: 'privacy', type: 'string', value: 'Próximamente' },
     ]);
   },
   async down({context: queryInterface}) {
