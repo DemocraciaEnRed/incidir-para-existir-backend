@@ -9,7 +9,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.DataTypes.INTEGER
       },
-      response: {
+      payload: {
         type: Sequelize.DataTypes.JSON,
         allowNull: false
       },

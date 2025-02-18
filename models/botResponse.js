@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
       primaryKey: true,
       allowNull: false
     },
-    response: {
+    payload: {
       type: DataTypes.JSON,
       allowNull: false
     }
