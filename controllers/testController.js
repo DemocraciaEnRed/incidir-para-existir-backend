@@ -210,7 +210,7 @@ exports.createBotResponses = async (req, res) => {
     const botResponses = []
     for(let i = 0; i < 50; i++) {
       botResponses.push({
-        response: {
+        payload: {
           a: faker.lorem.sentence(10),
           b: faker.lorem.sentence(10),
           c: faker.datatype.boolean(),
