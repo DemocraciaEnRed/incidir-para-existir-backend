@@ -24,3 +24,5 @@ router.post('/whatsapp',
 
 
 // -----------------------------------------------
+
+module.exports = router;
