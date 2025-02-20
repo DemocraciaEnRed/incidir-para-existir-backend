@@ -36,8 +36,6 @@ exports.getChallengeIdsByOneDimension = async (dimensionId, challengeName = null
 
     sqlQuery = sqlQuery.replace(/:otherConditions/g, otherConditions)
 
-    console.log(sqlQuery)
-
     const results = await models.sequelize.query(sqlQuery, {
       replacements: { 
         dimensionId,

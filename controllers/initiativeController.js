@@ -816,7 +816,6 @@ exports.statsChartCountByDimension = async (req, res) => {
     //   "count(i.id)" : 25
     // }]   
 
-    console.log(initiativeCounts)
 
     // Populate radar data for each city
     for (const city of cities) {

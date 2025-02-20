@@ -244,7 +244,6 @@ exports.create = async (req, res) => {
       inWords,
     } = req.body;
 
-    console.log(req.user)
 
   // validate the recaptcha
     if(RecaptchaHelper.requiresRecaptcha(req.user)) {

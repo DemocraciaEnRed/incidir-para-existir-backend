@@ -6,9 +6,7 @@ const dimension = require('../models/dimension');
 
 exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = null, includeUnpublished = false, cityId = null, subdivisionId = null) => {
   try {
-    console.log(dimensionId)
-    console.log(initiativeName)
-    console.log(includeUnpublished)
+
     let sqlQuery = `
       SELECT i.id
       FROM Initiatives as i
@@ -43,8 +41,6 @@ exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = nu
     }
 
     sqlQuery = sqlQuery.replace(/:otherConditions/g, otherConditions)
-
-    console.log(sqlQuery)
 
     const results = await models.sequelize.query(sqlQuery, {
       replacements: { 
@@ -110,7 +106,6 @@ exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeNam
       type: QueryTypes.SELECT,
     });
     
-    console.log(results)
     return results
   } catch (error) {xa
     throw error
