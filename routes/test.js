@@ -18,17 +18,24 @@ router.get('/dimensions-query',
   TestController.dimensionsQuery
 )
 
-router.get('/verify-account', TestController.verifyAccount)
+// router.get('/verify-account', TestController.verifyAccount)
 
-router.get('/create-initiatives', TestController.createInitiatives)
+// router.get('/create-initiatives', TestController.createInitiatives)
 
-router.get('/create-challenges', TestController.createChallenges)
+// router.get('/create-challenges', TestController.createChallenges)
 
-router.get('/create-blog-entries', TestController.createBlogEntries)
+// router.get('/create-blog-entries', TestController.createBlogEntries)
 
-router.get('/create-bot-responses', TestController.createBotResponses)
+// router.get('/create-bot-responses', TestController.createBotResponses)
 
-router.get('/create-resources', TestController.createResorces)
+// router.get('/create-resources', TestController.createResorces)
+
+// router.get('/create-comments', TestController.createComments)
+
+// router.get('/comments', TestController.getComments)
+
+// router.get('/replies', TestController.getReplies)
+
 
 router.post('/file-test', 
   uploader.single('file'),

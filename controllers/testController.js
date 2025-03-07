@@ -247,3 +247,105 @@ exports.createResorces = async (req, res) => {
     res.status(500).json({ message: msg.error.default });
   }
 }
+
+exports.createComments = async (req, res) => {
+  try {
+    const entries = await models.BlogEntry.findAll();
+    const users = await models.User.findAll();
+    
+    for (let i = 0; i < 50; i++) {
+      // pick a random entry
+      const entry = entries[Math.floor(Math.random() * entries.length)];
+      
+      // get a random number of comments between 12 and 52
+      const numComments = Math.floor(Math.random() * 40) + 12;
+
+      for (let j = 0; j < numComments; j++) {
+        // create a first level comment
+        const user = users[Math.floor(Math.random() * users.length)];
+        const comment = await models.Comment.create({
+          text: faker.lorem.sentence({min: 45, max: 90}),
+          authorId: user.id,
+          blogEntryId: entry.id,
+        })
+        console.log(`-- Created comment ${comment.id} for entry ${entry.id}`)
+        
+        // get a random number of replies between 12 and 52
+        const numReplies = Math.floor(Math.random() * 40) + 12;
+        for (let k = 0; k < numReplies; k++) {
+          const user = users[Math.floor(Math.random() * users.length)];
+          const reply = await models.Comment.create({
+            text: faker.lorem.sentence({min: 45, max: 90}),
+            authorId: user.id,
+            blogEntryId: entry.id,
+            commentId: comment.id,
+          })
+          console.log(`-- -- Created reply ${reply.id} for comment ${comment.id}`)
+        }        
+      }
+    }
+    
+    
+    return res.status(200).json({ message: 'Comments created' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.getComments = async (req, res) => {
+  try {
+    const entryId = req.query.entryId;
+
+    const comments = await models.Comment.findAll({
+      where: { blogEntryId: entryId, commentId: null },
+      include: [
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['id', 'firstName', 'lastName', 'fullName', 'imageUrl', 'role'],
+        },
+        {
+          model: models.Comment,
+          as: 'replies',
+          include: [
+            {
+              model: models.User,
+              as: 'author',
+              attributes: ['id', 'firstName', 'lastName', 'fullName', 'imageUrl', 'role'],
+            }
+          ]
+        }
+      ]
+    });
+
+    return res.status(200).json(comments);
+   
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.getReplies = async (req, res) => {
+  try {
+    const commentId = req.query.commentId;
+    
+
+    const replies = await models.Comment.findAll({
+      where: { commentId: commentId },
+      include: [
+        {
+          model: models.User,
+          as: 'author',
+          attributes: ['id', 'firstName', 'lastName', 'fullName', 'imageUrl', 'role'],
+        }
+      ]
+    });
+
+    return res.status(200).json(replies);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
