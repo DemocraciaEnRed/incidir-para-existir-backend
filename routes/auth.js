@@ -83,7 +83,6 @@ router.post('/reset/:token',
 	requiresAnon,
 	[
 		check('password').not().isEmpty().isLength({ min: 6 }).withMessage(msg.validationError.password),
-		check('confirmPassword', 'Las contraseñas no son similares').custom((value, { req }) => (value === req.body.password)),
 	],
 	validate,
 	AuthController.resetPassword

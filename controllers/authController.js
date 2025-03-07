@@ -137,7 +137,6 @@ exports.verify = async (req, res) => {
 		// Show a friendly success message
 		return res.status(200).json({ message: msg.auth.success.verification });
 
-		return res.status(200).send(html)
 	} catch (error) {
 		console.error(error);
 		return res.status(500).json({ message: 'Error al verificar el usuario' });
@@ -162,7 +161,7 @@ exports.resendToken = async (req, res) => {
 		// generate a new token 
 		const token = await user.generateVerificationToken();
 		// make the url
-		const url = `${process.env.APP_URL}/auth/verify/${token.token}`;
+		const url = `${process.env.APP_URL}/signup/verify/${token.token}`;
 		// send the email
 		// TODO
 		
@@ -187,9 +186,16 @@ exports.forgot = async (req, res) => {
 		// generate a new token 
 		const token = await user.generateResetToken();
 		// make the url
-		const url = `${process.env.APP_URL}/auth/reset/${token.token}`;
+		const url = `${process.env.APP_URL}/recover/reset?token=${token.token}`;
 		// send the email
-		// TODO
+
+		// send the email
+		try {
+			await AuthHelper.sendPasswordResetEmail(user, url);
+		} catch (error) {
+			console.error(error);
+			console.log('cannot send mail')
+		}
 		
 		return res.status(200).json({ message: msg.auth.success.resetMailSent, url: url });
 	} catch (error) {
