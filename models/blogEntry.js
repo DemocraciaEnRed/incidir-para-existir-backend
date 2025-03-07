@@ -24,6 +24,30 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'sectionId',
         as: 'section'
       })
+      BlogEntry.hasMany(models.Comment,{
+        foreignKey: 'blogEntryId',
+        sourceKey: 'id',
+        as: 'comments'
+      })
+    }
+
+    // instance method
+    // get the total amount of comments and replies for this entry
+    async getTotalCommentsAndRepliesCount() {
+      const comments = await this.getComments({
+        include: [{
+          model: sequelize.models.Comment,
+          as: 'replies'
+        }]
+      });
+
+      let totalCount = comments.length;
+      // console.log(totalCount)
+      comments.forEach(comment => {
+        totalCount += comment.replies.length;
+      });
+
+      return totalCount;
     }
   }
   BlogEntry.init({
@@ -46,7 +70,17 @@ module.exports = (sequelize, DataTypes) => {
         isUrl: true
       },
       allowNull: true
-    }
+    },
+    authorNotifiedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
+    publishedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
+    },
   }, {
     sequelize,
     timestamps: true,

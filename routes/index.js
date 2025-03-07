@@ -9,7 +9,6 @@ const challengeRoutes = require('./challenge');
 const memberRoutes = require('./member');
 const resourceRoutes = require('./resource');
 const webhookRoutes = require('./webhook');
-const reporterRoutes = require('./reporter');
 const faqRoutes = require('./faq');
 const authenticate = require('../middlewares/authenticate');
 
@@ -32,7 +31,6 @@ module.exports = app => {
 	app.use('/resources', resourceRoutes);
 	app.use('/webhook', webhookRoutes);
 	app.use('/test', testRoutes);
-	app.use('/reporter', reporterRoutes)
 };
 
 

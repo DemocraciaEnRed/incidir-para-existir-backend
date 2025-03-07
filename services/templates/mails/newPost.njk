@@ -1,0 +1,18 @@
+{% extends "base.njk" %}
+
+{% import "macros.njk" as macros %}
+
+{% block preheader %}
+  {{ macros.preheader('Nuevo post pendiente de aprobación - ' + fullname) }}
+{% endblock %}
+
+{% block main %}
+  {{ macros.sentence('¡Hola! 👋') }}
+  {{ macros.sentence('El usuario "' + fullname + '" ha creado un nuevo post para la sección de "¿EN QUE VÁ LA JUVENTUD?" y está esperando la aprobación de los administradores.') }}
+  {{ macros.sentence('A continuación, los detalles del mensaje:') }}
+  {{ macros.sentence('Autor: ' + fullname) }}
+  {{ macros.sentence('Email: ' + email) }}
+  {{ macros.sentence('Titulo: ' + postTitle) }}
+  {{ macros.sentence('Subtitulo: ' + postSubtitle) }}
+  {{ macros.sentence('Categoría: ' + postCategory) }}
+{% endblock %}

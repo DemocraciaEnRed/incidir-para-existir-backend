@@ -46,6 +46,17 @@ module.exports = (sequelize) => {
       let userToken = await sequelize.models.UserToken.create(data);
       return userToken;
     }
+    
+    async generateResetToken() {
+      let data = {
+        userId: this.id,
+        event: 'password-reset',
+        token: crypto.randomBytes(20).toString('hex'),
+        expiresAt: dayjs().add(1, 'hour').toDate()
+      }
+      let userToken = await sequelize.models.UserToken.create(data);
+      return userToken;
+    }
 
     async generateJWT() {
       const expiresIn = '2d';
@@ -111,6 +122,13 @@ module.exports = (sequelize) => {
         isUrl: true
       },
       allowNull: true
+    },
+    gravatarUrl: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const hash = crypto.createHash('md5').update(this.email).digest('hex');
+        return `https://www.gravatar.com/avatar/${hash}`;
+      },
     },
     subdivisionId: {
       type: DataTypes.INTEGER,

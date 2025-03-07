@@ -1,16 +1,17 @@
 const express = require('express');
 const { check, query, body, param } = require('express-validator');
 
-const validate = require('../middlewares/validate');
-const authorize = require('../middlewares/authorize');
-const requiresAnon = require('../middlewares/requiresAnon');
-const UserController = require('../controllers/userController');
-const msg = require('../utils/messages');
-const constants = require('../services/constants');
-const uploader = require('../middlewares/s3');
+const validate = require('../../middlewares/validate');
+const authorize = require('../../middlewares/authorize');
+const requiresAnon = require('../../middlewares/requiresAnon');
+const UserController = require('../../controllers/userController');
+const msg = require('../../utils/messages');
+const constants = require('../../services/constants');
+const uploader = require('../../middlewares/s3');
+const userPostsRouter = require('./post');
 
 // initialize router
-const router = express.Router();
+const router = express.Router({mergeParams: true});
 
 // -----------------------------------------------
 // BASE   /user
@@ -20,6 +21,7 @@ const router = express.Router();
 // GET    /all
 // GET    /setup?magic=
 // POST   /setup
+// ROUTER /posts
 // GET    /:id
 // PUT    /:id
 // PUT    /:id/enable
@@ -35,6 +37,21 @@ router.get('/',
   validate,
   UserController.fetch
 )
+
+router.post('/', 
+  authorize(constants.ROLES.ADMINISTRATOR),
+  [
+    check('firstName').isString(),
+    check('lastName').isString(),
+    check('email').isEmail(),
+    check('role').isString(),
+    check('password').isString(),
+    check('subdivisionId').optional().isInt(),
+  ],
+  validate,
+  UserController.createUser
+)
+
 
 router.get('/all',
   authorize(constants.ROLES.ADMINISTRATOR),
@@ -68,20 +85,9 @@ router.post('/setup',
 
 // -----------------------------------------------
 
-router.post('/', 
-  authorize(constants.ROLES.ADMINISTRATOR),
-  [
-    check('firstName').isString(),
-    check('lastName').isString(),
-    check('email').isEmail(),
-    check('role').isString(),
-    check('password').isString(),
-    check('subdivisionId').optional().isInt(),
-  ],
-  validate,
-  UserController.createUser
-)
+router.use('/posts/', userPostsRouter)
 
+// -----------------------------------------------
 
 router.post('/avatar',
   authorize(constants.ROLES.ALL),
