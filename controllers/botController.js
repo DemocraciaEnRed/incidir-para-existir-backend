@@ -231,7 +231,7 @@ exports.postTwilioWebhook = async (req, res) => {
     console.log('Saving payload to BotResponse model')
 
 
-    await models.BotResponse.create({
+    const botResponseInstance = await models.BotResponse.create({
       payload: req.body
     });
     
@@ -245,23 +245,35 @@ exports.postTwilioWebhook = async (req, res) => {
       if(payload.type === 'iniciativa') {
         console.log('Saving initiative')
         await saveInitiative(payload);
+        botResponseInstance.success = true;
+        await botResponseInstance.save();
       } else if (payload.type === 'desafio') {
         console.log('Processing challenge');
         await saveChallenge(payload);
+        botResponseInstance.success = true;
+        await botResponseInstance.save();
       } else {
         console.log('NOTE: Unknown type');
         console.log('- Not saving a new initiative or challenge');
         console.log('- Please check the payload type');
         console.log('==================================')
         // Do not make the webhook fail.
+        // Just log the error and save the payload
+        botResponseInstance.success = false;
+        botResponseInstance.errorTrace = 'Unknown type';
+        await botResponseInstance.save();
       }
     } catch (error) {
       console.error('Error saving initiative or challenge');
       console.error(error);
       console.log('Please check the error. Payload will still be saved')
       console.log('==================================')
+      botResponseInstance.success = false;
+      botResponseInstance.errorTrace = error;
+      await botResponseInstance.save();
     }
 
+    console.log('Returning 200 OK');
     // Return 200 OK
     return res.status(200).send();
   } catch (error) {

@@ -16,7 +16,15 @@ module.exports = (sequelize) => {
     payload: {
       type: DataTypes.JSON,
       allowNull: false
-    }
+    },
+    success: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false
+    },
+    errorTrace: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'BotResponse',
