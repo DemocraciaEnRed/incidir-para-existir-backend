@@ -60,7 +60,7 @@ exports.createInitiatives = async (req, res) => {
 
       // get a random subdivision
       const randomSubdivision = subdivisions[Math.floor(Math.random() * subdivisions.length)]
-
+      
       const setCoordinates = faker.datatype.boolean(0.75)
       const coordinates = faker.location.nearbyGPSCoordinate({
         origin: [randomSubdivision.latitude, randomSubdivision.longitude],
@@ -77,6 +77,7 @@ exports.createInitiatives = async (req, res) => {
       const newInitiative = await models.Initiative.create({
         ...initiative,
         contactId: newContact.id,
+        cityId: randomSubdivision.city.id,
         subdivisionId: randomSubdivision.id,
       })
 
@@ -120,7 +121,9 @@ exports.createChallenges = async (req, res) => {
     //    longitude: null
     
     const dimensions = await models.Dimension.findAll()
-    const subdivisions = await models.Subdivision.findAll()
+    const subdivisions = await models.Subdivision.findAll({
+      include: 'city'
+    })
 
     // make a loop of 150 iterations
     for(let i = 0; i < 150; i++) {
@@ -128,6 +131,7 @@ exports.createChallenges = async (req, res) => {
         needsAndChallenges: faker.lorem.sentence({min: 20, max: 90}),
         proposal: faker.lorem.sentence({min: 20, max: 90}),
         inWords: faker.lorem.words({min: 1, max: 2}),
+        publishedAt: new Date(),
         latitude: null,
         longitude: null
       }
@@ -148,6 +152,7 @@ exports.createChallenges = async (req, res) => {
       }
 
       const newChallenge = await models.Challenge.create({
+        cityId: randomSubdivision.city.id,
         subdivisionId: randomSubdivision.id,
         dimensionId: randomDimension.id,
         ...challenge,
@@ -157,7 +162,7 @@ exports.createChallenges = async (req, res) => {
     return res.status(200).json({
       message: '150 Challenges created successfully'
     })
-  } catch {
+  } catch (error) {
     console.error(error)
     return res.status(500).json({message: error.message})
   }
@@ -188,7 +193,7 @@ exports.createBlogEntries = async (req, res) => {
       await models.BlogEntry.create({
         title: faker.lorem.words({min: 8, max: 16}),
         subtitle: faker.lorem.sentence(16),
-        text: faker.lorem.paragraphs({min: 12, max: 24}),
+        text: faker.lorem.paragraphs({min: 10, max: 20}),
         imageUrl: faker.image.urlPicsumPhotos({ width: 1024, height: 768, grayscale: false, blur: 0 }),
         slug: faker.lorem.slug(5),
         authorId: author.id,
