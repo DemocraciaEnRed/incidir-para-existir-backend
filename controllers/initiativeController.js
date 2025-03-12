@@ -86,16 +86,14 @@ exports.fetch = async (req, res) => {
           attributes: ['firstName', 'lastName'],
         },
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name', 'latitude', 'longitude'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name', 'latitude', 'longitude'],
-            }
-          ]
         },
         {
           model: models.InitiativeContact,
@@ -138,18 +136,21 @@ exports.fetchOne = async (req, res) => {
     const isAdmin = UtilsHelper.isAdmin(req.user);
 
     const initiative = await models.Initiative.findByPk(initiativeId, {
+      where: {
+        publishedAt: {
+          [Op.not]: null,
+        },
+      },
       include: [
+        {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name', 'latitude', 'longitude'],
+        },
         {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name', 'latitude', 'longitude'],
-            }
-          ]
         },
         {
           model: models.InitiativeContact,
@@ -204,16 +205,14 @@ exports.fetchAllGeolocalized = async (req, res) => {
           attributes: ['firstName', 'lastName'],
         },
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name', 'latitude', 'longitude'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name', 'latitude', 'longitude'],
-            }
-          ]
         },
         {
           model: models.InitiativeContact,
@@ -245,6 +244,7 @@ exports.create = async (req, res) => {
       description, 
       needsAndOffers, 
       dimensionIds,
+      cityId,
       subdivisionId,
       latitude,
       longitude,
@@ -267,14 +267,25 @@ exports.create = async (req, res) => {
       }
     });
 
-    // check if the subdivisionId exists
-    const subdivision = await models.Subdivision.findByPk(subdivisionId);
-
-    if(!subdivision) {
-      return res.status(404).json({ message: 'Subdivisión no encontrada' });
+    // check if the cityId exists, this SHOULD come in the request
+    const city = await models.City.findByPk(cityId);
+    
+    if (!city) {
+      return res.status(404).json({ message: 'Ciudad no encontrada' });
     }
 
-    const t = await models.sequelize.transaction();
+    // if the body has subdivisionId, check if it exists
+    let subdivision = null;
+    if(subdivisionId) {
+      subdivision = await models.Subdivision.findByPk(subdivisionId);
+
+      if(!subdivision) {
+        return res.status(404).json({ message: 'Subdivisión no encontrada' });
+      }
+    }
+
+
+    const t = await models.sequelize.transaction(); 
 
     try {
       // create the contact
@@ -295,6 +306,7 @@ exports.create = async (req, res) => {
         description,
         needsAndOffers,
         contactId: newContact.id,
+        cityId,
         subdivisionId: subdivisionId,
         latitude,
         longitude,
@@ -331,16 +343,14 @@ exports.getById = async (req, res) => {
     const initiative = await models.Initiative.findByPk(initiativeId, {
       include: [
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name', 'latitude', 'longitude'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name', 'latitude', 'longitude'],
-            }
-          ]
         },
         {
           model: models.InitiativeContact,
@@ -427,7 +437,12 @@ exports.update = async (req, res) => {
       initiative.source = req.body.source;
       initiative.description = req.body.description;
       initiative.needsAndOffers = req.body.needsAndOffers;
-      initiative.subdivisionId = req.body.subdivisionId;
+      initiative.cityId = cityId;
+      if(subdivisionId == undefined){
+        initiative.subdivisionId = null;
+      } else {
+        initiative.subdivisionId = subdivisionId;
+      }
       initiative.latitude = req.body.latitude || null;
       initiative.longitude = req.body.longitude || null;
 
@@ -626,11 +641,11 @@ exports.downloadInitiativesCsv = async (req, res) => {
       },
       {
         label: 'ciudadId',
-        value: 'subdivision.city.id',
+        value: 'city.id',
       },
       {
         label: 'ciudadNombre',
-        value: 'subdivision.city.name',
+        value: 'city.name',
       },
       {
         label: 'subdivisionId',
@@ -844,8 +859,8 @@ exports.statsCountByDimensionBar = async (req, res) => {
     // count how many initiatives are in each city
     const countOfInitiativesPerCity = await models.Initiative.findAll({
       attributes: [
-        [models.sequelize.col("subdivision.city.id"), "cityId"],
-        [models.sequelize.col("subdivision.city.name"), "cityName"],
+        [models.sequelize.col("city.id"), "cityId"],
+        [models.sequelize.col("city.name"), "cityName"],
         [models.sequelize.fn("COUNT", "cityId"), "count"],
       ],
       where: {
@@ -857,16 +872,9 @@ exports.statsCountByDimensionBar = async (req, res) => {
       distinct: true,
       include: [
         {
-          model: models.Subdivision,
-          as: "subdivision",
+          model: models.City,
+          as: "city",
           attributes: [],
-          include : [
-            {
-              model: models.City,
-              as: "city",
-              attributes: [],
-            }
-          ]
         },
       ],
     });

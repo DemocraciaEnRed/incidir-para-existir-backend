@@ -23,6 +23,13 @@ module.exports = (sequelize) => {
         },
         as: 'contact',
       });
+      Initiative.belongsTo(models.City, {
+        foreignKey: {
+          name: 'cityId',
+          allowNull: true,
+        },
+        as: 'city',
+      });
       Initiative.belongsTo(models.Subdivision, {
         foreignKey: {
           name: 'subdivisionId',
@@ -48,6 +55,10 @@ module.exports = (sequelize) => {
     contactId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    cityId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     subdivisionId: {
       type: DataTypes.INTEGER,

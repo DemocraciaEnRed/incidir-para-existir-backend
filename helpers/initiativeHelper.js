@@ -24,12 +24,12 @@ exports.getInitiativeIdsByOneDimension = async (dimensionId, initiativeName = nu
       otherConditionsArr.push(`i.name LIKE '%${initiativeName}%'`)
     }
 
+    if(cityId) {
+      otherConditionsArr.push(`i.cityId = ${cityId}`)
+    }
+
     if(subdivisionId) {
       otherConditionsArr.push(`i.subdivisionId = ${subdivisionId}`)
-    } else {
-      if(cityId) {
-        otherConditionsArr.push(`c.id = ${cityId}`)
-      }
     }
 
     if(!includeUnpublished) {
@@ -66,6 +66,7 @@ exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeNam
       JOIN InitiativeDimensions IniDim2 ON i.id = IniDim2.initiativeId
       WHERE IniDim1.dimensionId = :dimensionId1
         AND IniDim2.dimensionId = :dimensionId2
+        
         AND :otherConditions
         AND NOT EXISTS (
           SELECT 1
@@ -83,12 +84,11 @@ exports.getIdsByTwoDimensions = async (dimensionId1, dimensionId2, initiativeNam
       otherConditionsArr.push(`i.name LIKE '%${initiativeName}%'`)
     }
 
+    if(cityId) {
+      otherConditionsArr.push(`i.cityId = ${cityId}`)
+    }
     if(subdivisionId) {
       otherConditionsArr.push(`i.subdivisionId = ${subdivisionId}`)
-    } else {
-      if(cityId) {
-        otherConditionsArr.push(`c.id = ${cityId}`)
-      }
     }
   
     if(!includeUnpublished) {
@@ -129,13 +129,13 @@ exports.getIdsWithoutFilteringByDimensions = async (initiativeName = null, inclu
     if(initiativeName) {
       otherConditionsArr.push(`i.name LIKE '%${initiativeName}%'`)
     }
+    
+    if(cityId) {
+      otherConditionsArr.push(`i.cityId = ${cityId}`)
+    }
 
     if(subdivisionId) {
       otherConditionsArr.push(`i.subdivisionId = ${subdivisionId}`)
-    } else {
-      if(cityId) {
-        otherConditionsArr.push(`c.id = ${cityId}`)
-      }
     }
 
     if(!includeUnpublished) {
@@ -165,8 +165,7 @@ exports.getInitiativesCountByCityAndDimension = async () => {
       SELECT c2.id, id.dimensionId, COUNT(i.id) as 'count'
       FROM Initiatives i 
       LEFT JOIN InitiativeDimensions id ON i.id = id.initiativeId
-      LEFT JOIN Subdivisions AS s ON i.subdivisionId = s.id
-      LEFT JOIN Cities AS c2 ON s.cityId = c2.id
+      LEFT JOIN Cities AS c2 ON i.cityId = c2.id
       WHERE i.publishedAt IS NOT NULL
       GROUP BY c2.id, id.dimensionId
       ORDER BY c2.id ASC, id.dimensionId ASC
@@ -194,8 +193,7 @@ exports.getInitiativesStatsByDimensionBar = async () => {
       FROM Initiatives AS i
       LEFT JOIN InitiativeDimensions AS id ON i.id = id.initiativeId
       LEFT JOIN Dimensions AS d ON id.dimensionId = d.id
-      LEFT JOIN Subdivisions AS s ON i.subdivisionId = s.id
-      LEFT JOIN Cities AS c2 ON s.cityId = c2.id
+      LEFT JOIN Cities AS c2 ON i.cityId = c2.id
       WHERE i.publishedAt IS NOT NULL
       GROUP BY
         d.id,
@@ -223,7 +221,7 @@ exports.getInitiativesCountBySubdivision = async (cityId = null) => {
       FROM Subdivisions s 
       LEFT JOIN Initiatives i ON i.subdivisionId = s.id 
       LEFT JOIN Cities c ON s.cityId = c.id
-      WHERE c.id = :cityId 
+      WHERE c.id = :cityId
       GROUP BY s.id
     `;
     const results = await models.sequelize.query(sqlQuery, {
