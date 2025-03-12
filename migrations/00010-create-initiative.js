@@ -26,6 +26,14 @@ module.exports = {
         onDelete: 'cascade',
         onUpdate: 'cascade'
       },
+      cityId: {
+        type: Sequelize.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'Cities',
+          key: 'id'
+        }
+      },
       subdivisionId: {
         type: Sequelize.DataTypes.INTEGER,
         allowNull: true,
@@ -58,6 +66,21 @@ module.exports = {
       needsAndOffers: {
         type: Sequelize.DataTypes.TEXT,
         allowNull: false,
+      },
+      customCity: {
+        type: Sequelize.DataTypes.STRING,
+        defaultValue: null,
+        allowNull: true,
+      },
+      customSubdivision: {
+        type: Sequelize.DataTypes.STRING,
+        defaultValue: null,
+        allowNull: true,
+      },
+      extra: {
+        type: Sequelize.DataTypes.JSON,
+        defaultValue: null,
+        allowNull: true,
       },
       publishedAt: {
         type: Sequelize.DataTypes.DATE,

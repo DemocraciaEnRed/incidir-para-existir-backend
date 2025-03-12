@@ -47,6 +47,15 @@ module.exports = {
         type: Sequelize.DataTypes.STRING,
         allowNull: true
       },
+      publishedAt: {
+        type: Sequelize.DataTypes.DATE,
+        allowNull: true
+      },
+      authorNotifiedAt: {
+        type: Sequelize.DataTypes.DATE,
+        allowNull: true,
+        defaultValue: null,
+      },
       createdAt: {
         type: Sequelize.DataTypes.DATE,
         defaultValue: Sequelize.fn('now'),
