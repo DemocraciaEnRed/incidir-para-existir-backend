@@ -16,6 +16,13 @@ module.exports = (sequelize) => {
         targetKey: 'id',
         as: 'dimension',
       });
+      Challenge.belongsTo(models.City, {
+        foreignKey: {
+          name: 'cityId',
+          allowNull: true,
+        },
+        as: 'city',
+      });
       Challenge.belongsTo(models.Subdivision, {
         foreignKey: {
           name: 'subdivisionId',
@@ -30,6 +37,10 @@ module.exports = (sequelize) => {
     dimensionId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    cityId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     subdivisionId: {
       type: DataTypes.INTEGER,
@@ -60,7 +71,7 @@ module.exports = (sequelize) => {
     },
     proposal: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     inWords: {
       type: DataTypes.TEXT,
@@ -80,6 +91,11 @@ module.exports = (sequelize) => {
       type: DataTypes.TEXT,
       defaultValue: null,
       allowNull: true,
+    },
+    publishedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      defaultValue: null,
     },
   }, {
     sequelize,

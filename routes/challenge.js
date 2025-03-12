@@ -37,12 +37,12 @@ router.get('/',
 router.post('/', 
 	[
 		check('dimensionId').isInt().withMessage(msg.validationError.integer),
-		check('subdivisionId').isInt().withMessage(msg.validationError.integer),
-		check('latitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
+		check('cityId').isInt().withMessage(msg.validationError.integer),
+		check('subdivisionId').optional().isInt().withMessage(msg.validationError.integer),		check('latitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
 		check('longitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
 		check('source').isString().withMessage(msg.validationError.string),
 		check('needsAndChallenges').isString().withMessage(msg.validationError.string),
-		check('proposal').isString().withMessage(msg.validationError.string),
+		check('proposal').optional().isString().withMessage(msg.validationError.string),
 		check('inWords').isString().withMessage(msg.validationError.string),
 		check('recaptchaResponse').isString().withMessage(msg.validationError.string),
 	], 
@@ -75,12 +75,13 @@ router.put('/:id',
 	[
 		param('id').isInt().withMessage(msg.validationError.integer),
 		body('dimensionId').isInt().withMessage(msg.validationError.integer),
-		body('subdivisionId').isInt().withMessage(msg.validationError.integer),
-		check('latitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
-		check('longitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
-		check('source').isString().withMessage(msg.validationError.string),
+		body('cityId').isInt().withMessage(msg.validationError.integer),
+		body('subdivisionId').optional().isInt().withMessage(msg.validationError.integer),
+		body('latitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
+		body('longitude').optional().isDecimal().withMessage(msg.validationError.defaultMessage),
+		body('source').isString().withMessage(msg.validationError.string),
 		body('needsAndChallenges').isString().withMessage(msg.validationError.string),
-		body('proposal').isString().withMessage(msg.validationError.string),
+		body('proposal').optional().isString().withMessage(msg.validationError.string),
 		body('inWords').isString().withMessage(msg.validationError.string),
 	],
 	validate,
@@ -88,6 +89,7 @@ router.put('/:id',
 );
 
 router.delete('/:id',
+	authorize(constants.ROLES.ADMINISTRATOR),
 	[
 		param('id').isInt().withMessage(msg.validationError.integer),
 	],
@@ -95,6 +97,23 @@ router.delete('/:id',
 	ChallengeController.delete
 );
 
+router.put('/:id/publish',
+	authorize(constants.ROLES.ADMINISTRATOR),
+	[
+		check('id').isInt().withMessage(msg.validationError.integer),
+	],
+	validate,
+	ChallengeController.publish
+);
+
+router.put('/:id/unpublish',
+	authorize(constants.ROLES.ADMINISTRATOR),
+	[
+		check('id').isInt().withMessage(msg.validationError.integer),
+	],
+	validate,
+	ChallengeController.unpublish
+);
 
 router.get('/stats/chart/count-by-subdivision/:cityId?',
 	[

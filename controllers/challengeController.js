@@ -58,9 +58,9 @@ exports.fetch = async (req, res) => {
     // check if we need to filter by dimensions
     if(dimension) {
       // if it's an array of 2 dimensions, we'll use the getChallengeIdsByTwoDimensions
-      result = await ChallengeHelper.getChallengeIdsByOneDimension(dimension, queryName, city, subdivision);
+      result = await ChallengeHelper.getChallengeIdsByOneDimension(dimension, queryName, includeUnpublished, city, subdivision);
     } else {
-      result = await ChallengeHelper.getIdsWithoutFilteringByDimensions(queryName, city, subdivision);
+      result = await ChallengeHelper.getIdsWithoutFilteringByDimensions(queryName, includeUnpublished, city, subdivision);
     }
 
     // get the ids from the result
@@ -77,16 +77,14 @@ exports.fetch = async (req, res) => {
       distinct: true,
       include: [
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name', 'latitude', 'longitude'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name', 'latitude', 'longitude'],
-            }
-          ]
         },
         {
           model: models.Dimension,
@@ -113,7 +111,17 @@ exports.fetchOne = async (req, res) => {
     }
 
     const challenge = await models.Challenge.findByPk(challengeId, {
+      where: {
+        publishedAt: {
+          [Op.not]: null,
+        },
+      },
       include: [
+        {
+          model: models.City,
+          as: "city",
+          attributes: ["id", "name", "latitude", "longitude" ],
+        },
         {
           model: models.Dimension,
           as: "dimension",
@@ -123,13 +131,6 @@ exports.fetchOne = async (req, res) => {
           model: models.Subdivision,
           as: "subdivision",
           attributes: ["id", "name", "type", "latitude", "longitude"],
-          include: [
-            {
-              model: models.City,
-              as: "city",
-              attributes: ["id", "name", "latitude", "longitude" ],
-            },
-          ],
         },
       ],
     });
@@ -156,19 +157,20 @@ exports.fetchAllGeolocalized = async (req, res) => {
         longitude: {
           [Op.not]: null,
         },
+        publishedAt: {
+          [Op.not]: null,
+        }
       },
       include: [
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name', 'latitude', 'longitude'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
-          attributes: ['id', 'type', 'name', 'latitude', 'longitude'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name', 'latitude', 'longitude'],
-            }
-          ]
+          attributes: ['id', 'type', 'name', 'latitude', 'longitude']
         },
         {
           model: models.Dimension,
@@ -186,54 +188,11 @@ exports.fetchAllGeolocalized = async (req, res) => {
   }
 }
 
-exports.update = async (req, res) => {
-  try {
-    const challengeId = req.params.id || null;
-
-    if (!challengeId) {
-      return res.status(400).json({ message: msg.error.default });
-    }
-
-    const challenge = await models.Challenge.findByPk(challengeId);
-
-    if (!challenge) {
-      return res.status(404).json({ message: msg.error.notFound });
-    }
-
-    const {
-      dimensionId,
-      subdivisionId,
-      source,
-      needsAndChallenges,
-      proposal,
-      latitude,
-      longitude,
-      inWords,
-    } = req.body;
-
-    challenge.dimensionId = dimensionId;
-    challenge.subdivisionId = subdivisionId;
-    challenge.source = source;
-    challenge.needsAndChallenges = needsAndChallenges;
-    challenge.proposal = proposal;
-    challenge.latitude = latitude || null;
-    challenge.longitude = longitude || null;
-    challenge.inWords = inWords;
-
-    await challenge.save();
-
-    return res.status(200).json(challenge);
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: msg.error.default });
-  }
-}
-
 exports.create = async (req, res) => {
   try {
     const {
       dimensionId,
+      cityId,
       subdivisionId,
       source,
       needsAndChallenges,
@@ -256,6 +215,7 @@ exports.create = async (req, res) => {
     // create a new Challenge entry
     const challenge = await models.Challenge.create({
       dimensionId,
+      cityId,
       subdivisionId,
       source,
       needsAndChallenges,
@@ -263,6 +223,7 @@ exports.create = async (req, res) => {
       longitude,
       proposal,
       inWords,
+      publishedAt: new Date(),
     });
 
     return res.status(201).json(challenge);
@@ -271,6 +232,59 @@ exports.create = async (req, res) => {
     return res.status(500).json({ message: msg.error.default });
   }
 };
+
+
+exports.update = async (req, res) => {
+  try {
+    const challengeId = req.params.id || null;
+
+    if (!challengeId) {
+      return res.status(400).json({ message: msg.error.default });
+    }
+
+    const challenge = await models.Challenge.findByPk(challengeId);
+
+    if (!challenge) {
+      return res.status(404).json({ message: msg.error.notFound });
+    }
+
+    const {
+      dimensionId,
+      cityId,
+      subdivisionId,
+      source,
+      needsAndChallenges,
+      proposal,
+      latitude,
+      longitude,
+      inWords,
+    } = req.body;
+
+    console.log(req.body)
+
+    challenge.dimensionId = dimensionId;
+    challenge.cityId = cityId;
+    if(subdivisionId == undefined){
+      challenge.subdivisionId = null;
+    } else {
+      challenge.subdivisionId = subdivisionId;
+    }
+    challenge.source = source;
+    challenge.needsAndChallenges = needsAndChallenges;
+    challenge.proposal = proposal || null;
+    challenge.latitude = latitude || null;
+    challenge.longitude = longitude || null;
+    challenge.inWords = inWords;
+
+    await challenge.save();
+
+    return res.status(200).json(challenge);
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
 
 exports.delete = async (req, res) => {
   try {
@@ -295,6 +309,8 @@ exports.delete = async (req, res) => {
     return res.status(500).json({ message: msg.error.default });
   }
 };
+
+
 
 exports.statsChartCountByDimension = async (req, res) => {
   try {
@@ -328,34 +344,7 @@ exports.statsChartCountByDimension = async (req, res) => {
       name: dimension.name,
     }));
 
-    // Fetch all challenges and group counts by city and dimension
-    const challenges = await models.Challenge.count({
-      group: ["dimensionId", "subdivision.city.id"],
-      include: [
-        {
-          model: models.Subdivision,
-          as: "subdivision",
-          include: [
-            {
-              model: models.City,
-              as: "city",
-            },
-          ],
-        },
-      ],
-    });
-
-    // Convert challenges to a map for fast access
-    const challengeCounts = challenges.reduce((acc, challenge) => {
-      const cityId = challenge.id; // subdivision.city.id;
-      const dimensionId = challenge.dimensionId;
-      const count = parseInt(challenge.count, 10);
-
-      if (!acc[cityId]) acc[cityId] = {};
-      acc[cityId][dimensionId] = count;
-
-      return acc;
-    }, {});
+    const challengeCounts = await ChallengeHelper.getChallengesCountByCityAndDimension()
 
     // Populate radar data for each city
     for (const city of cities) {
@@ -365,7 +354,7 @@ exports.statsChartCountByDimension = async (req, res) => {
           show: true,
         },
         value: dimensions.map(
-          (dimension) => challengeCounts[city.id]?.[dimension.id] || 0
+          (dimension) => challengeCounts.find((count) => count.id === city.id && count.dimensionId === dimension.id)?.count || 0
         ),
       };
       radarData.radar.data.push(cityData);
@@ -459,18 +448,21 @@ exports.downloadChallengesCsv = async (req, res) => {
     }
 
     const challenges = await models.Challenge.findAll({
+      where: {
+        publishedAt: {
+          [Op.not]: null,
+        },
+      },
       include: [
+        {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name'],
+        },
         {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name'],
-            }
-          ]
         },
         {
           model: models.Dimension,
@@ -495,11 +487,11 @@ exports.downloadChallengesCsv = async (req, res) => {
       },
       {
         label: 'ciudadId',
-        value: 'subdivision.city.id',
+        value: 'city.id',
       },
       {
         label: 'ciudadNombre',
-        value: 'subdivision.city.name',
+        value: 'city.name',
       },
       {
         label: 'subdivisionId',
@@ -558,5 +550,47 @@ exports.downloadChallengesCsv = async (req, res) => {
   } catch (error) {
     console.error(error)
     return res.status(500).json({ message: msg.error.default })
+  }
+}
+
+exports.publish = async (req, res) => {
+  try {
+    const challengeId = req.params.id;
+
+    const challenge = await models.Challenge.findByPk(challengeId);
+
+    if(!challenge) {
+      return res.status(404).json({ message: 'Desafio no encontrado' });
+    }
+
+    challenge.publishedAt = dayjs().format('YYYY-MM-DD HH:mm:ss');
+
+    await challenge.save();
+
+    return res.status(200).json({ message: 'Desafio publicado' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al publicar el desafío' });
+  }
+}
+
+exports.unpublish = async (req, res) => {
+  try {
+    const challengeId = req.params.id;
+
+    const challenge = await models.Challenge.findByPk(challengeId);
+
+    if(!challenge) {
+      return res.status(404).json({ message: 'Desafío no encontrado' });
+    }
+
+    challenge.publishedAt = null;
+
+    await challenge.save();
+
+    return res.status(200).json({ message: 'Desafío despublicado' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al despublicar el desafío' });
   }
 }
