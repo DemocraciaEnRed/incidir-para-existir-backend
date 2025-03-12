@@ -26,6 +26,9 @@ module.exports = multer({
     cb(null, isValid);
     // cb(new Error("I don't have a clue!")); can also throw errors
   },
+  // limits: {
+  //   fileSize: 1024 * 1024 * 5, // 5MB
+  // },
   storage: multerS3({
     s3: new S3Client({
       forcePathStyle: false,
@@ -45,7 +48,16 @@ module.exports = multer({
       // save file to Spaces, you can use / to add folders directory
       const fileName = Date.now().toString(); //file.originalname;
       const extension = file.originalname.split('.').pop();
-      cb(null, `guilleTest/${fileName}.${extension}`);
+      let folder = 'projects/movilizatorio';
+      const environment = process.env.NODE_ENV || 'development'
+      if(environment === 'production') {
+        folder = 'projects/movilizatorio/production';
+      } else if(environment === 'staging') {
+        folder = 'projects/movilizatorio/staging';
+      } else if(environment === 'development') {
+        folder = 'projects/movilizatorio/development';
+      }
+      cb(null, `${folder}/${fileName}.${extension}`);
     }
   })
 })
