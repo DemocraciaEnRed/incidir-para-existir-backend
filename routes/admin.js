@@ -23,6 +23,11 @@ router.get('/stats',
   AdminController.getStats
 )
 
+router.get('/simple-stats',
+  authorize(constants.ROLES.ADMINISTRATOR),
+  AdminController.getSimpleStats
+)
+
 router.get('/initiatives/csv',
   authorize(constants.ROLES.ADMINISTRATOR),
   AdminController.getInitiativesCsv

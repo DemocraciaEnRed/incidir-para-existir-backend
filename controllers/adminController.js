@@ -12,18 +12,66 @@ exports.getStats = async (req, res) => {
     const stats = {
       totalUsers: await models.User.count(),
       usersVerified: await models.User.count({ where: { emailVerified: true } }),
-      usersNotVerified: 0,
+      usersNotVerified: await models.User.count({ where: { emailVerified: false } }),
+      usersWhoHaveNotLoggedInIn30Days: await models.User.count({ where: { lastLogin: { [Op.lt]: dayjs().subtract(30, 'days').toDate() } } }),
+      usersWhoHaveNotLoggedInIn60Days: await models.User.count({ where: { lastLogin: { [Op.lt]: dayjs().subtract(60, 'days').toDate() } } }),
       totalEntries: await models.BlogEntry.count(),
-      totalEntriesNotPublished: await models.BlogEntry.count({ where: { publishedAt: { [Op.eq]: null } } }),
       totalEntriesPublished: await models.BlogEntry.count({ where: { publishedAt: { [Op.ne]: null } } }),
-      totalComments: await models.Comment.count(),
+      totalEntriesNotPublished: await models.BlogEntry.count({ where: { publishedAt: { [Op.eq]: null } } }),
+      totalEntriesComments: await models.Comment.count({ where: { commentId: { [Op.eq]: null } } }),
+      totalEntriesReplies: await models.Comment.count({ where: { commentId: { [Op.ne]: null } } }),
       totalChallenges: await models.Challenge.count(),
+      totalChallengesPublished: await models.Challenge.count({ where: { publishedAt: { [Op.ne]: null } } }),
+      totalChallengesUnpublished: await models.Challenge.count({ where: { publishedAt: { [Op.eq]: null } } }),
+      totalChallengesWhatsapp: await models.Challenge.count({ where: { source: 'whatsapp' } }),
+      totalChallengesWeb: await models.Challenge.count({ where: { source: 'web' } }),
+      totalChallengesWhatsappPublished : await models.Challenge.count({ where: { source: 'whatsapp', publishedAt: { [Op.ne]: null } } }),
+      totalChallengesWebPublished : await models.Challenge.count({ where: { source: 'web', publishedAt: { [Op.ne]: null } } }),
+      totalChallengesWhatsappUnpublished : await models.Challenge.count({ where: { source: 'whatsapp', publishedAt: { [Op.eq]: null } } }),
+      totalChallengesWebUnpublished : await models.Challenge.count({ where: { source: 'web', publishedAt: { [Op.eq]: null } } }),
+      totalInitiatives: await models.Initiative.count(),
+      totalInitiativesPublished: await models.Initiative.count({ where: { publishedAt: { [Op.ne]: null } } }),
+      totalInitiativesUnpublished: await models.Initiative.count({ where: { publishedAt: { [Op.eq]: null } } }),
+      totalInitiativesWhatsapp: await models.Initiative.count({ where: { source: 'whatsapp' } }),
+      totalInitiativesWeb: await models.Initiative.count({ where: { source: 'web' } }),
+      totalInitiativesWhatsappPublished : await models.Initiative.count({ where: { source: 'whatsapp', publishedAt: { [Op.ne]: null } } }),
+      totalInitiativesWebPublished : await models.Initiative.count({ where: { source: 'web', publishedAt: { [Op.ne]: null } } }),
+      totalInitiativesWhatsappUnpublished : await models.Initiative.count({ where: { source: 'whatsapp', publishedAt: { [Op.eq]: null } } }),
+      totalInitiativesWebUnpublished : await models.Initiative.count({ where: { source: 'web', publishedAt: { [Op.eq]: null } } }),
+      totalBotResponses: await models.BotResponse.count(),
+      totalBotResponsesSuccess: await models.BotResponse.count({ where: { success: true } }),
+      totalBotResponsesError: await models.BotResponse.count({ where: { success: false } }),
+    }
+
+
+    return res.status(200).json(stats);
+
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({ message: msg.error.default })
+  }
+}
+
+exports.getSimpleStats = async (req, res) => {
+  try {
+    const stats = {
+      totalUsers: await models.User.count(),
+      usersVerified: await models.User.count({ where: { emailVerified: true } }),
+      totalEntries: await models.BlogEntry.count(),
+      totalEntriesPublished: await models.BlogEntry.count({ where: { publishedAt: { [Op.ne]: null } } }),
+      totalEntriesUnpublished: 0,
+      totalChallenges: await models.Challenge.count(),
+      totalChallengesPublished: await models.Challenge.count({ where: { publishedAt: { [Op.ne]: null } } }),
+      totalChallengesUnpublished: 0,
       totalInitiatives: await models.Initiative.count(),
       totalInitiativesPublished: await models.Initiative.count({ where: { publishedAt: { [Op.ne]: null } } }),
       totalInitiativesUnpublished: 0,
+      totalBotResponses: await models.BotResponse.count(),
+      totalBotResponsesSuccess: await models.BotResponse.count({ where: { success: true } }),
     }
 
-    stats.usersNotVerified = stats.totalUsers - stats.usersVerified;
+    stats.totalEntriesUnpublished = stats.totalEntries - stats.totalEntriesPublished;
+    stats.totalChallengesUnpublished = stats.totalChallenges - stats.totalChallenges
     stats.totalInitiativesUnpublished = stats.totalInitiatives - stats.totalInitiativesPublished;
 
     return res.status(200).json(stats);
@@ -44,16 +92,14 @@ exports.getInitiativesCsv = async (req, res) => {
           attributes: ['fullname', 'email', 'phone', 'keepEmailPrivate', 'keepPhonePrivate'],
         },
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name'],
-            }
-          ]
         },
         {
           model: models.Dimension,
@@ -92,11 +138,11 @@ exports.getInitiativesCsv = async (req, res) => {
       },
       {
         label: 'contactoNombreCompleto',
-        value: 'contact.fullname',
+        value: (row) => row.contact ? row.contact.fullname : null,
       },
       {
         label: 'contactoEmail',
-        value: 'contact.email',
+        value: (row) => row.contact ? row.contact.email : null,
       },
       {
         label: 'contactoEmailPrivado',
@@ -104,7 +150,7 @@ exports.getInitiativesCsv = async (req, res) => {
       },
       {
         label: 'contactoTelefono',
-        value: 'contact.phone',
+        value: (row) => row.contact ? row.contact.phone : null,
       },
       {
         label: 'contactoTelefonoPrivado',
@@ -112,23 +158,23 @@ exports.getInitiativesCsv = async (req, res) => {
       },
       {
         label: 'ciudadId',
-        value: 'subdivision.city.id',
+        value: 'city.id',
       },
       {
         label: 'ciudadNombre',
-        value: 'subdivision.city.name',
+        value: 'city.name',
       },
       {
         label: 'subdivisionId',
-        value: 'subdivision.id'
+        value: (row) => row.subdivision ? row.subdivision.id : null
       },
       {
         label: 'subdivisionNombre',
-        value: 'subdivision.name',
+        value: (row) => row.subdivision ? row.subdivision.name : null
       },
       {
         label: 'subdivisionTipo',
-        value: 'subdivision.type',
+        value: (row) => row.subdivision ? row.subdivision.type : null
       },
       {
         label: 'latitude',
@@ -166,6 +212,18 @@ exports.getInitiativesCsv = async (req, res) => {
         label: 'necesidadesYOfertas',
         value: 'needsAndOffers',
       },
+            {
+        label: 'customCity',
+        value: (row) => row.customCity ? row.customCity : null
+      },
+      {
+        label: 'customSubdivision',
+        value: (row) => row.customSubdivision ? row.customSubdivision : null
+      },
+      {
+        label: 'extra',
+        value: (row) => row.extra ? JSON.stringify(row.extra) : null
+      },
     ];
 
     const opts = { fields, defaultValue: 'NULL' };
@@ -190,16 +248,14 @@ exports.getChallengesCsv = async (req, res) => {
     const challenges = await models.Challenge.findAll({
       include: [
         {
+          model: models.City,
+          as: 'city',
+          attributes: ['id','name'],
+        },
+        {
           model: models.Subdivision,
           as: 'subdivision',
           attributes: ['id', 'type', 'name'],
-          include: [
-            {
-              model: models.City,
-              as: 'city',
-              attributes: ['id','name'],
-            }
-          ]
         },
         {
           model: models.Dimension,
@@ -224,23 +280,23 @@ exports.getChallengesCsv = async (req, res) => {
       },
       {
         label: 'ciudadId',
-        value: 'subdivision.city.id',
+        value: 'city.id',
       },
       {
         label: 'ciudadNombre',
-        value: 'subdivision.city.name',
+        value: 'city.name',
       },
       {
         label: 'subdivisionId',
-        value: 'subdivision.id'
+        value: (row) => row.subdivision ? row.subdivision.id : null
       },
       {
         label: 'subdivisionNombre',
-        value: 'subdivision.name',
+        value: (row) => row.subdivision ? row.subdivision.name : null
       },
       {
         label: 'subdivisionTipo',
-        value: 'subdivision.type',
+        value: (row) => row.subdivision ? row.subdivision.type : null
       },
       {
         label: 'ejeTematicoId',
@@ -264,11 +320,23 @@ exports.getChallengesCsv = async (req, res) => {
       },
       {
         label: 'propuesta',
-        value: 'proposal'
+        value: (row) => row.proposal ? row.proposal : null
       },
       {
         label: 'enPalabras',
         value: 'inWords',
+      },
+      {
+        label: 'customCity',
+        value: (row) => row.customCity ? row.customCity : null
+      },
+      {
+        label: 'customSubdivision',
+        value: (row) => row.customSubdivision ? row.customSubdivision : null
+      },
+      {
+        label: 'extra',
+        value: (row) => row.extra ? JSON.stringify(row.extra) : null
       },
     ]
 
@@ -298,8 +366,6 @@ exports.listBotResponses = async (req, res) => {
     // calculateOffset
     const offset = (page - 1) * limit;
 
-
-    
     const botResponses = await models.BotResponse.findAndCountAll({
       limit,
       offset,
