@@ -11,15 +11,19 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
-      allowNull: false
+      allowNull: false,
     },
     payload: {
       type: DataTypes.JSON,
-      allowNull: false
+      allowNull: false,
+    },
+    payload: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     success: {
       type: DataTypes.BOOLEAN,
-      allowNull: false
+      allowNull: false,
     },
     errorTrace: {
       type: DataTypes.JSON,
