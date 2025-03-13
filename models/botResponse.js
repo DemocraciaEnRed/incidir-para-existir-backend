@@ -17,13 +17,14 @@ module.exports = (sequelize) => {
       type: DataTypes.JSON,
       allowNull: false,
     },
-    payload: {
+    type: {
       type: DataTypes.STRING,
       allowNull: true,
     },
     success: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
+      defaultValue: false,
     },
     errorTrace: {
       type: DataTypes.JSON,
