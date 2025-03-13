@@ -41,6 +41,13 @@ exports.getStats = async (req, res) => {
       totalBotResponses: await models.BotResponse.count(),
       totalBotResponsesSuccess: await models.BotResponse.count({ where: { success: true } }),
       totalBotResponsesError: await models.BotResponse.count({ where: { success: false } }),
+      totalBotResponsesUnknown: await models.BotResponse.count({ where: { type: 'unknown' } }),
+      totalBotResponsesInitiative: await models.BotResponse.count({ where: { type: 'iniciativa' } }),
+      totalBotResponsesInitiativeSuccess: await models.BotResponse.count({ where: { type: 'iniciativa', success: true } }),
+      totalBotResponsesInitiativeError: await models.BotResponse.count({ where: { type: 'iniciativa', success: false } }),
+      totalBotResponsesChallenge: await models.BotResponse.count({ where: { type: 'desafio' } }),
+      totalBotResponsesChallengeSuccess: await models.BotResponse.count({ where: { type: 'desafio', success: true } }),
+      totalBotResponsesChallengeError: await models.BotResponse.count({ where: { type: 'desafio', success: false } }),
     }
 
 
