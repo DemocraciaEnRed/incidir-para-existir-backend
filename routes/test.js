@@ -10,13 +10,13 @@ const validate = require('../middlewares/validate');
 const TestController = require('../controllers/testController');
 
 // ids is a string of comma separated integers
-router.get('/dimensions-query', 
-  [
-    query('id.*').isInt().withMessage('id must be an array of integers'),
-  ],
-  validate,
-  TestController.dimensionsQuery
-)
+// router.get('/dimensions-query', 
+//   [
+//     query('id.*').isInt().withMessage('id must be an array of integers'),
+//   ],
+//   validate,
+//   TestController.dimensionsQuery
+// )
 
 // router.get('/verify-account', TestController.verifyAccount)
 
@@ -36,10 +36,11 @@ router.get('/dimensions-query',
 
 // router.get('/replies', TestController.getReplies)
 
+router.post('/mailtest', TestController.mailtest)
 
-router.post('/file-test', 
-  uploader.single('file'),
-  TestController.fileTest
-)
+// router.post('/file-test', 
+//   uploader.single('file'),
+//   TestController.fileTest
+// )
 
 module.exports = router;

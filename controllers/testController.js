@@ -4,6 +4,7 @@ const models = require('../models');
 const dayjs = require('dayjs');
 const msg = require('../utils/messages');
 const UtilsHelper = require('../helpers/utilsHelper');
+const mailer = require('../services/mailer');
 
 exports.dimensionsQuery = async (req, res) => {
   try {
@@ -349,6 +350,26 @@ exports.getReplies = async (req, res) => {
     });
 
     return res.status(200).json(replies);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: msg.error.default });
+  }
+}
+
+exports.mailtest = async (req, res) => {
+  try {
+    const {
+      to,
+      from,
+      subject,
+    } = req.body
+    const html = await mailer.renderHtml('auth/successVerification', {
+      appUrl: process.env.APP_URL
+    });
+    console.log(process.env)
+    await mailer.sendNow(to, subject, html);
+    
+    return res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: msg.error.default });
