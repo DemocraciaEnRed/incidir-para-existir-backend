@@ -57,15 +57,15 @@ module.exports = (sequelize, DataTypes) => {
     },
     sectionId: DataTypes.INTEGER,
     categoryId: DataTypes.INTEGER,
-    title: DataTypes.STRING,
-    slug: DataTypes.STRING,
+    title: DataTypes.TEXT,
+    slug: DataTypes.STRING(512),
     subtitle: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: true
     },
     text: DataTypes.TEXT,
     imageUrl: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(512),
       validate: {
         isUrl: true
       },

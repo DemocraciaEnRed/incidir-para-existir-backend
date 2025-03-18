@@ -31,20 +31,20 @@ module.exports = {
         }
       },
       title: {
-        type: Sequelize.DataTypes.STRING
+        type: Sequelize.DataTypes.TEXT
       },
       slug: {
-        type: Sequelize.DataTypes.STRING
+        type: Sequelize.DataTypes.STRING(512)
       },
       subtitle: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.TEXT,
         allowNull: true
       },
       text: {
         type: Sequelize.DataTypes.TEXT
       },
       imageUrl: {
-        type: Sequelize.DataTypes.STRING,
+        type: Sequelize.DataTypes.STRING(512),
         allowNull: true
       },
       publishedAt: {
