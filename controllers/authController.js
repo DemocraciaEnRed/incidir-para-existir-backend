@@ -15,21 +15,21 @@ const msg = require('../utils/messages');
 exports.register = async (req, res) => {
   try {
 		const { email, firstName, lastName, password, subdivisionId } = req.body;
-    console.log('got body')
+    // console.log('got body')
 
 		// Make sure this account doesn't already exist
 		const user = await models.User.findOne({ where: { email } });
-		console.log('got user')
+		// console.log('got user')
 		if (user){
-			console.log('user exists')
+			// console.log('user exists')
 			return res.status(401).json({ message: 'El email ya se encuentra registrado' });
 		} 
 
 		const newUser = await models.User.create({ email, firstName, lastName, password, subdivisionId });
-		console.log('created user')
+		// console.log('created user')
 
 		const token = await newUser.generateVerificationToken();
-		console.log('got token')
+		// console.log('got token')
 
 		// make the url
 		const url = `${process.env.APP_URL}/signup/verify?token=${token.token}`;
