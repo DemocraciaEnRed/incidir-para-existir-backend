@@ -30,7 +30,7 @@ module.exports = app => {
 	app.use('/members', memberRoutes);
 	app.use('/resources', resourceRoutes);
 	app.use('/webhook', webhookRoutes);
-	app.use('/test', testRoutes);
+	// app.use('/test', testRoutes); 
 };
 
 

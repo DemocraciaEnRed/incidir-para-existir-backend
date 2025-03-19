@@ -36,7 +36,7 @@ const TestController = require('../controllers/testController');
 
 // router.get('/replies', TestController.getReplies)
 
-router.post('/mailtest', TestController.mailtest)
+// router.post('/mailtest', TestController.mailtest)
 
 // router.post('/file-test', 
 //   uploader.single('file'),
