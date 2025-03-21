@@ -179,8 +179,6 @@ async function saveInitiative(payload) {
         // if locality_cali is 'a', its comuna...
         const comuna = validComunas[payload.comuna_cali]; // should be a number but in a string format
         if (comuna) {
-          // finalSubdivisionName = null
-        } else {
           // validate subdivision
           subdivision = await models.Subdivision.findOne({
             where: {
@@ -192,6 +190,8 @@ async function saveInitiative(payload) {
           if (!subdivision) {
             throw new Error('Invalid subdivision: ' + comuna);
           }
+        } else {
+          // finalSubdivisionName = null
         }
       } else if (selectedCaliType === 'b') {
         // if locality_cali is 'b', its corregimiento...
@@ -435,8 +435,6 @@ async function saveChallenge(payload) {
         // if locality_cali is 'a', its comuna...
         const comuna = validComunas[payload.comuna_cali]; // should be a number but in a string format
         if (comuna) {
-          // finalSubdivisionName = null
-        } else {
           // validate subdivision
           subdivision = await models.Subdivision.findOne({
             where: {
@@ -448,6 +446,8 @@ async function saveChallenge(payload) {
           if (!subdivision) {
             throw new Error('Invalid subdivision: ' + comuna);
           }
+        } else {
+          // finalSubdivisionName = null
         }
       } else if (selectedCaliType === 'b') {
         // if locality_cali is 'b', its corregimiento...
